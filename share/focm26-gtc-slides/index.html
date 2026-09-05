@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Speaker slides from the Graph Theory and Combinatorics workshop at FoCM 2026 in Vienna.">
+  <title>FoCM 2026 · Graph Theory and Combinatorics · Slides</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #292929;
+      --muted: #707070;
+      --link: #35658a;
+      --surface: #fafaf8;
+      --line: #dededb;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    .shell {
+      width: min(1080px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+      padding: 28px 0 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: clamp(1.55rem, 3vw, 2rem);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .lede {
+      max-width: 660px;
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      margin-top: 14px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--link);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-color: transparent;
+      text-underline-offset: 3px;
+      transition: color 140ms ease, text-decoration-color 140ms ease;
+    }
+
+    .button:hover {
+      color: var(--ink);
+      text-decoration-color: currentColor;
+    }
+
+    main {
+      padding: 32px 0 56px;
+    }
+
+    .talks {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .talk {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      overflow: hidden;
+      flex-direction: column;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      background: var(--white);
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 140ms ease;
+    }
+
+    .talk:hover {
+      border-color: #a9a9a4;
+    }
+
+    .talk:focus-visible,
+    .button:focus-visible {
+      outline: 2px solid var(--link);
+      outline-offset: 3px;
+    }
+
+    .preview {
+      display: grid;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      place-items: center;
+      margin: 0;
+      border-bottom: 1px solid var(--line);
+      background: #f0f0ee;
+    }
+
+    .preview img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .talk-copy {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      padding: 14px;
+    }
+
+    .speaker {
+      margin: 0;
+      color: var(--ink);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .affiliation {
+      margin: 2px 0 10px;
+      color: var(--muted);
+      font-size: 0.77rem;
+    }
+
+    .title {
+      margin: 0;
+      color: var(--link);
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .title::after {
+      margin-left: 4px;
+      content: "↗";
+      font-size: 0.75em;
+      white-space: nowrap;
+    }
+
+    .talk:hover .title {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      background: var(--white);
+      padding: 20px 0 28px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    footer p {
+      margin: 0;
+    }
+
+    @media (max-width: 900px) {
+      .talks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        width: min(100% - 24px, 1080px);
+      }
+
+      .hero {
+        padding: 20px 0;
+      }
+
+      main {
+        padding: 24px 0 40px;
+      }
+
+      .talks {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .button,
+      .talk {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="shell">
+      <p class="eyebrow">FoCM 2026</p>
+      <h1>Graph Theory and Combinatorics slides</h1>
+      <p class="lede">Slides shared by workshop speakers.</p>
+      <div class="actions">
+        <a class="button button-primary" href="focm26-gtc-slides.zip" download>
+          <span aria-hidden="true">↓</span> Download all (.zip)
+        </a>
+        <a class="button button-secondary" href="https://focm2026.univie.ac.at/?page_id=1481" target="_blank" rel="noopener">
+          Workshop page <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="talks">
+      <a class="talk" href="slides/manuel-bodirsky-first-order-convergence-csps.pdf" target="_blank" rel="noopener" aria-label="Open Manuel Bodirsky's slides">
+        <figure class="preview">
+          <img src="thumbnails/manuel-bodirsky-first-order-convergence-csps.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Manuel Bodirsky</p>
+          <p class="affiliation">TU Dresden</p>
+          <h2 class="title">CSPs have first-order convergence</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/loic-foissy-cointeracting-bialgebras.pdf" target="_blank" rel="noopener" aria-label="Open Loïc Foissy's slides">
+        <figure class="preview">
+          <img src="thumbnails/loic-foissy-cointeracting-bialgebras.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Loïc Foissy</p>
+          <p class="affiliation">Université du Littoral Côte d’Opale</p>
+          <h2 class="title">Cointeracting bialgebras and applications to graphs</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/daniel-kral-quasirandomness-combinatorial-limits.pdf" target="_blank" rel="noopener" aria-label="Open Daniel Kráľ's slides">
+        <figure class="preview">
+          <img src="thumbnails/daniel-kral-quasirandomness-combinatorial-limits.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Daniel Kráľ</p>
+          <p class="affiliation">Leipzig University &amp; MPI Leipzig</p>
+          <h2 class="title">Quasirandomness through lenses of combinatorial limits</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/christian-krattenthaler-boundary-dents.pdf" target="_blank" rel="noopener" aria-label="Open Christian Krattenthaler's slides">
+        <figure class="preview">
+          <img src="thumbnails/christian-krattenthaler-boundary-dents.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Christian Krattenthaler</p>
+          <p class="affiliation">University of Vienna</p>
+          <h2 class="title">Boundary dents, the arctic circle and the arctic ellipse</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/hong-liu-chromatic-thresholds-linear-equations.pdf" target="_blank" rel="noopener" aria-label="Open Hong Liu's slides">
+        <figure class="preview">
+          <img src="thumbnails/hong-liu-chromatic-thresholds-linear-equations.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Hong Liu</p>
+          <p class="affiliation">Institute for Basic Science</p>
+          <h2 class="title">Chromatic thresholds for linear equations and recurrence</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/svante-linusson-k-core-tasep.pdf" target="_blank" rel="noopener" aria-label="Open Svante Linusson's slides">
+        <figure class="preview">
+          <img src="thumbnails/svante-linusson-k-core-tasep.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Svante Linusson</p>
+          <p class="affiliation">KTH Royal Institute of Technology</p>
+          <h2 class="title">A new limit on k-core integer partitions and the strong TASEP(k)</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/oleg-pikhurko-flag-algebra-toolbox.pdf" target="_blank" rel="noopener" aria-label="Open Oleg Pikhurko's slides">
+        <figure class="preview">
+          <img src="thumbnails/oleg-pikhurko-flag-algebra-toolbox.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Oleg Pikhurko</p>
+          <p class="affiliation">University of Warwick</p>
+          <h2 class="title">FlagAlgebraToolbox: A package for flag algebra computations</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/stephanie-van-willigenburg-de-clawing-graph-theory.pdf" target="_blank" rel="noopener" aria-label="Open Stephanie van Willigenburg's slides">
+        <figure class="preview">
+          <img src="thumbnails/stephanie-van-willigenburg-de-clawing-graph-theory.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Stephanie van Willigenburg</p>
+          <p class="affiliation">University of British Columbia</p>
+          <h2 class="title">De-clawing graph theory</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/alexandra-wesolek-asymptotic-dimension-local-algorithms.pdf" target="_blank" rel="noopener" aria-label="Open Alexandra Wesolek's slides">
+        <figure class="preview">
+          <img src="thumbnails/alexandra-wesolek-asymptotic-dimension-local-algorithms.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Alexandra Wesolek</p>
+          <p class="affiliation">University of Bordeaux</p>
+          <h2 class="title">The use of asymptotic dimension in LOCAL algorithms</h2>
+        </div>
+      </a>
+
+      <a class="talk" href="slides/elizabeth-xiao-nonplanar-binary-forests.pdf" target="_blank" rel="noopener" aria-label="Open Elizabeth Xiao's slides">
+        <figure class="preview">
+          <img src="thumbnails/elizabeth-xiao-nonplanar-binary-forests.jpg" alt="" loading="lazy">
+        </figure>
+        <div class="talk-copy">
+          <p class="speaker">Elizabeth Xiao</p>
+          <p class="affiliation">Caltech</p>
+          <h2 class="title">A Hopf algebra on nonplanar binary forests</h2>
+        </div>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="shell">
+      <p>The slides are provided by their authors and remain their intellectual property.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>d=4 M-curve browser</title>
+  <style>
+    :root {
+      --bg: #f7f7f5; --text: #1a1a1a; --muted: #555;
+      --tile-bg: #fff; --tile-border: #ddd;
+      --header-bg: #efefed;
+      --accent: #2e6cff;
+      --accent-faded: #2e6cff44;
+      --red: #d23838;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111113; --text: #d8d8d4; --muted: #888;
+        --tile-bg: #1a1a1d; --tile-border: #2a2a2e;
+        --header-bg: #1e1e22;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+           font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+           min-height: 100vh; }
+    #status { font-size: 14px; padding: 10px 20px; background: var(--header-bg);
+              border-bottom: 1px solid var(--tile-border); font-variant-numeric: tabular-nums;
+              display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    #loading-status { font-size: 11px; color: var(--muted); margin-left: auto; }
+    #loading-status.active::before { content: '⟳ '; }
+    #status .key { color: var(--muted); margin-right: 6px; }
+    #status .value { font-family: 'SF Mono', Monaco, Consolas, monospace; }
+    #status .nomatch { color: var(--red); }
+    #status .match { color: var(--accent); }
+    #app { display: grid; grid-template-columns: 1fr 360px; min-height: calc(100vh - 40px); }
+    #left { padding: 16px; overflow-y: auto; max-height: calc(100vh - 40px); }
+    #right { padding: 20px; border-left: 1px solid var(--tile-border);
+             background: var(--header-bg); display: flex; flex-direction: column; gap: 12px;
+             position: sticky; top: 0; max-height: 100vh; overflow-y: auto; }
+    #board { display: block; margin: 0 auto; }
+    #board circle.vertex { cursor: pointer; fill: var(--tile-bg); stroke: var(--text); stroke-width: 1.5; }
+    #board circle.vertex:hover { fill: var(--accent-faded); }
+    #board circle.vertex.pending { fill: var(--accent); stroke: var(--accent); }
+    #board circle.vertex.interior { stroke-dasharray: 2,2; }
+    #board line.candidate { stroke: var(--tile-border); stroke-width: 1; }
+    #board line.boundary { stroke: var(--muted); stroke-width: 1.5; opacity: 0.55; }
+    #board line.selected { stroke: var(--accent); stroke-width: 3; }
+    .controls { display: flex; flex-direction: column; gap: 8px; }
+    .controls button { padding: 8px 12px; font-size: 13px; cursor: pointer;
+                       background: var(--tile-bg); color: var(--text);
+                       border: 1px solid var(--tile-border); border-radius: 6px; }
+    .controls button:hover { background: var(--accent-faded); border-color: var(--accent); }
+    .edges-list { font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 11px;
+                  color: var(--muted); padding: 8px; background: var(--tile-bg);
+                  border: 1px solid var(--tile-border); border-radius: 6px;
+                  min-height: 60px; max-height: 120px; overflow-y: auto; word-break: break-all; }
+    .legend { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+    .tile { background: var(--tile-bg); border: 1px solid var(--tile-border);
+            border-radius: 8px; padding: 6px; }
+    .tile .meta { font-size: 11px; color: var(--muted); text-align: center;
+                  font-variant-numeric: tabular-nums; margin-top: 4px; }
+    .tile svg { display: block; margin: 0 auto; }
+    .rtable-wrap { overflow: auto; max-width: 100%; }
+    .rtable { border-collapse: separate; border-spacing: 2px; font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 10px; }
+    .rtable th { color: var(--muted); padding: 2px 4px; font-weight: normal; text-align: center;
+                 background: var(--bg); position: sticky; }
+    .rtable thead th { top: 0; z-index: 2; }
+    .rtable tbody th { left: 0; z-index: 1; padding-right: 6px; text-align: right; }
+    .rtable thead th.corner { left: 0; z-index: 3; }
+    .rtable td { padding: 0; }
+    .rtable td.filled { background: var(--tile-bg); border: 1px solid var(--tile-border); border-radius: 4px; }
+    .rtable td.empty { border: 1px dashed var(--tile-border); opacity: 0.3; }
+    .rtable svg { display: block; }
+    .rtable .scheme-stats { color: var(--muted); font-size: 11px; margin: 8px 0; font-family: system-ui, sans-serif; }
+    .empty-msg { color: var(--muted); font-style: italic; padding: 30px; text-align: center; }
+    .loading { color: var(--muted); padding: 30px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="status">
+    <span><span class="key">D index:</span><span id="d-idx" class="value">—</span></span>
+    <span><span class="key">scheme:</span><span id="scheme" class="value">—</span></span>
+    <span><span class="key">realisations:</span><span id="count" class="value">—</span></span>
+    <span id="msg" class="value"></span>
+    <span id="loading-status"></span>
+  </div>
+  <div id="app">
+    <div id="left">
+      <div id="tiles">
+        <div class="empty-msg">Click two lattice points on the right to form an edge.<br>
+        Once your edge-set matches a Haas-strict, odd-cycle-free zone decomposition,
+        all realising (T, σ) pairs appear here.</div>
+      </div>
+    </div>
+    <div id="right">
+      <svg id="board" viewBox="0 0 300 300" width="300" height="300" style="max-width:100%;"></svg>
+      <div class="controls">
+        <button id="clear-btn">Clear edges</button>
+      </div>
+      <div>
+        <div class="key" style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">
+          Selected edges:</div>
+        <div class="edges-list" id="edges-list">(none)</div>
+      </div>
+      <div class="legend">
+        Interior lattice points are dashed.<br>
+        Click vertex → click second vertex → toggles the edge.
+      </div>
+    </div>
+  </div>
+
+<script>
+const BUCKET_SIZE = 1000;
+const SVG_W = 300, SVG_H = 300, SVG_PAD = 22;
+const TILE_SVG_W = 160, TILE_SVG_H = 160, TILE_PAD = 12;
+const D = 4;
+const INTERIOR_INDICES = new Set([6, 7, 10]);
+const COORDS_D4 = [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[3,0],[3,1],[4,0]];
+const TOTAL_TRIS = 7424;
+const TOTAL_POLS = 4096;
+const TOTAL_D = 192438;
+
+let DATA = { coords: COORDS_D4 };  // tris + pols populated when index.json arrives
+let D_EDGES = null;    // [[a,b],...][192438]
+let KEY_TO_DIDX = null; // canonical edge-key → d_idx
+let BUCKET_CACHE = new Map(); // bucket_idx → {d_idx_str: [[t,s], ...]}
+
+let selectedEdges = new Set(); // canonical "a,b" strings
+let pendingVertex = null;
+
+// Loading tracker
+const loading = new Set();
+function startLoad(name) { loading.add(name); updateLoadingDisplay(); }
+function endLoad(name) { loading.delete(name); updateLoadingDisplay(); }
+function updateLoadingDisplay() {
+  const el = document.getElementById('loading-status');
+  if (!el) return;
+  if (loading.size === 0) {
+    el.textContent = '';
+    el.classList.remove('active');
+  } else {
+    el.textContent = 'loading ' + [...loading].join(', ');
+    el.classList.add('active');
+  }
+}
+
+function canonEdge(a, b) {
+  if (a < b) return a + ',' + b;
+  return b + ',' + a;
+}
+
+function edgeSetKey(edgeSet) {
+  // canonical: sorted "a,b" entries joined by ';'
+  return Array.from(edgeSet).sort((p, q) => {
+    const [pa, pb] = p.split(',').map(Number);
+    const [qa, qb] = q.split(',').map(Number);
+    return pa - qa || pb - qb;
+  }).map(e => e + ';').join('');
+}
+
+function latticePos(x, y, w, h, pad) {
+  const span = Math.min(w, h) - 2 * pad;
+  const sx = pad + (x / D) * span;
+  const sy = h - pad - (y / D) * span;
+  return [sx, sy];
+}
+
+function boundaryEdges() {
+  // Primitive segments along ∂A = {i=0, j=0, i+j=d}.
+  // For d=4: just consecutive lattice points along each side.
+  const edges = [];
+  // i = 0 side: (0,0)-(0,1)-(0,2)-(0,3)-(0,4)
+  // j = 0 side: (0,0)-(1,0)-(2,0)-(3,0)-(4,0)
+  // i + j = d: (4,0)-(3,1)-(2,2)-(1,3)-(0,4)
+  const pointOf = (x, y) => DATA.coords.findIndex(([cx, cy]) => cx === x && cy === y);
+  for (let i = 0; i < D; i++) {
+    edges.push([pointOf(0, i), pointOf(0, i + 1)]);          // left
+    edges.push([pointOf(i, 0), pointOf(i + 1, 0)]);          // bottom
+    edges.push([pointOf(D - i, i), pointOf(D - i - 1, i + 1)]); // hypotenuse
+  }
+  return edges;
+}
+
+let BOUNDARY_EDGES = null;
+
+function renderBoard() {
+  const svg = document.getElementById('board');
+  svg.innerHTML = '';
+  if (BOUNDARY_EDGES === null) BOUNDARY_EDGES = boundaryEdges();
+  // Draw ∂A as light reference lines
+  for (const [a, b] of BOUNDARY_EDGES) {
+    const [ax, ay] = DATA.coords[a];
+    const [bx, by] = DATA.coords[b];
+    const [sx1, sy1] = latticePos(ax, ay, SVG_W, SVG_H, SVG_PAD);
+    const [sx2, sy2] = latticePos(bx, by, SVG_W, SVG_H, SVG_PAD);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', sx1); line.setAttribute('y1', sy1);
+    line.setAttribute('x2', sx2); line.setAttribute('y2', sy2);
+    line.setAttribute('class', 'boundary');
+    svg.appendChild(line);
+  }
+  // Draw selected edges as bold lines (each with an invisible wide hit-area for easy clicking)
+  for (const key of selectedEdges) {
+    const [a, b] = key.split(',').map(Number);
+    const [ax, ay] = DATA.coords[a];
+    const [bx, by] = DATA.coords[b];
+    const [sx1, sy1] = latticePos(ax, ay, SVG_W, SVG_H, SVG_PAD);
+    const [sx2, sy2] = latticePos(bx, by, SVG_W, SVG_H, SVG_PAD);
+    const visible = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    visible.setAttribute('x1', sx1); visible.setAttribute('y1', sy1);
+    visible.setAttribute('x2', sx2); visible.setAttribute('y2', sy2);
+    visible.setAttribute('class', 'selected');
+    svg.appendChild(visible);
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    hit.setAttribute('x1', sx1); hit.setAttribute('y1', sy1);
+    hit.setAttribute('x2', sx2); hit.setAttribute('y2', sy2);
+    hit.setAttribute('stroke', 'transparent');
+    hit.setAttribute('stroke-width', '14');
+    hit.setAttribute('style', 'cursor: pointer;');
+    hit.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedEdges.delete(key);
+      pendingVertex = null;
+      refreshEdgesAndMatch();
+      renderBoard();
+    });
+    svg.appendChild(hit);
+  }
+  // Draw lattice points
+  for (let i = 0; i < DATA.coords.length; i++) {
+    const [x, y] = DATA.coords[i];
+    const [sx, sy] = latticePos(x, y, SVG_W, SVG_H, SVG_PAD);
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', sx); c.setAttribute('cy', sy);
+    c.setAttribute('r', 8);
+    const isInt = INTERIOR_INDICES.has(i);
+    const isPending = (pendingVertex === i);
+    let cls = 'vertex';
+    if (isInt) cls += ' interior';
+    if (isPending) cls += ' pending';
+    c.setAttribute('class', cls);
+    c.setAttribute('data-idx', i);
+    c.addEventListener('click', () => onVertexClick(i));
+    svg.appendChild(c);
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', sx);
+    text.setAttribute('y', sy - 12);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-size', '9');
+    text.setAttribute('fill', 'var(--muted)');
+    text.textContent = `(${x},${y})`;
+    svg.appendChild(text);
+  }
+}
+
+function isBoundaryEdgeKey(key) {
+  if (BOUNDARY_EDGES === null) return false;
+  return BOUNDARY_EDGES.some(([a, b]) => canonEdge(a, b) === key);
+}
+
+function onVertexClick(i) {
+  if (pendingVertex === null) {
+    pendingVertex = i;
+  } else if (pendingVertex === i) {
+    pendingVertex = null;
+  } else {
+    const key = canonEdge(pendingVertex, i);
+    pendingVertex = null;
+    if (isBoundaryEdgeKey(key)) {
+      // boundary edges of A are always part of every D; treat as no-op
+    } else {
+      if (selectedEdges.has(key)) selectedEdges.delete(key);
+      else selectedEdges.add(key);
+      refreshEdgesAndMatch();
+    }
+  }
+  renderBoard();
+}
+
+function refreshEdgesAndMatch() {
+  // Update edges list display
+  const list = Array.from(selectedEdges).sort();
+  const ll = document.getElementById('edges-list');
+  if (list.length === 0) {
+    ll.textContent = '(none)';
+  } else {
+    ll.textContent = list.map(e => {
+      const [a, b] = e.split(',').map(Number);
+      const [ax, ay] = DATA.coords[a];
+      const [bx, by] = DATA.coords[b];
+      return `(${ax},${ay})–(${bx},${by})`;
+    }).join('  ');
+  }
+  // Look up canonical key in map
+  if (selectedEdges.size === 0) {
+    setStatus({d_idx: '—', scheme: '—', count: '—', msg: ''});
+    document.getElementById('tiles').innerHTML =
+      '<div class="empty-msg">Click two lattice points on the right to form an edge.</div>';
+    return;
+  }
+  if (KEY_TO_DIDX === null) {
+    setStatus({d_idx: '…', scheme: '…', count: '…', msg: 'waiting for D index…'});
+    return;
+  }
+  const key = edgeSetKey(selectedEdges);
+  const d_idx = KEY_TO_DIDX.get(key);
+  if (d_idx === undefined) {
+    setStatus({d_idx: '—', scheme: '—', count: '—',
+               msg: 'not Haas-strict and odd-cycle-free', msgClass: 'nomatch'});
+    document.getElementById('tiles').innerHTML =
+      '<div class="empty-msg">Edge set is not in the database (not a Haas-strict + odd-cycle-free zone decomposition).</div>';
+    return;
+  }
+  // Match: load realizations bucket
+  setStatus({d_idx: `${d_idx} / ${TOTAL_D}`, scheme: '<4>', count: '…', msg: ''});
+  loadRealizations(d_idx).then(realisations => {
+    const {nT, nS} = countUnique(realisations);
+    const tWord = nT === 1 ? 'triangulation' : 'triangulations';
+    const sWord = nS === 1 ? 'polarisation' : 'polarisations';
+    setStatus({d_idx: `${d_idx} / ${TOTAL_D}`, scheme: '<4>',
+               count: `${realisations.length} (${nT} / ${TOTAL_TRIS} ${tWord} and ${nS} / ${TOTAL_POLS} ${sWord})`,
+               msg: 'match', msgClass: 'match'});
+    if (DATA.tris && DATA.pols) {
+      renderTiles(realisations);
+    } else {
+      document.getElementById('tiles').innerHTML =
+        '<div class="loading">Realisations ready; waiting for triangulation + polarisation data…</div>';
+    }
+  }).catch(err => {
+    setStatus({d_idx: `${d_idx} / ${TOTAL_D}`, scheme: '<4>', count: '?', msg: 'load error: ' + err.message, msgClass: 'nomatch'});
+  });
+}
+
+function setStatus({d_idx, scheme, count, msg, msgClass}) {
+  document.getElementById('d-idx').textContent = d_idx;
+  document.getElementById('scheme').textContent = scheme;
+  document.getElementById('count').textContent = count;
+  const m = document.getElementById('msg');
+  m.textContent = msg;
+  m.className = 'value ' + (msgClass || '');
+}
+
+async function loadRealizations(d_idx) {
+  const bucket = Math.floor(d_idx / BUCKET_SIZE);
+  if (!BUCKET_CACHE.has(bucket)) {
+    const name = `realizations bucket ${bucket}`;
+    startLoad(name);
+    try {
+      const url = `realizations/${String(bucket).padStart(4, '0')}.json`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`fetch ${url} → ${resp.status}`);
+      BUCKET_CACHE.set(bucket, await resp.json());
+    } finally {
+      endLoad(name);
+    }
+  }
+  const data = BUCKET_CACHE.get(bucket);
+  return data[String(d_idx)] || [];
+}
+
+function unpackSigma(sigmaBits) {
+  const sigma = new Array(15);
+  for (let i = 0; i < 15; i++) sigma[i] = ((sigmaBits >> i) & 1) === 1;
+  return sigma;
+}
+
+function countUnique(realisations) {
+  const tSet = new Set(), sSet = new Set();
+  for (const [t, s] of realisations) { tSet.add(t); sSet.add(s); }
+  return { nT: tSet.size, nS: sSet.size };
+}
+
+function renderTiles(realisations) {
+  const container = document.getElementById('tiles');
+  if (realisations.length === 0) {
+    container.innerHTML = '<div class="empty-msg">No realisations (database inconsistency).</div>';
+    return;
+  }
+  const sortedReals = [...realisations].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const html = ['<div class="grid">'];
+  for (const [t_idx, sigma_id] of sortedReals) {
+    const tri = DATA.tris[t_idx];
+    const sigma = unpackSigma(DATA.pols[sigma_id]);
+    html.push('<div class="tile">');
+    html.push(renderTileSvg(tri, sigma));
+    html.push(`<div class="meta">T#${t_idx}  σ#${sigma_id}</div>`);
+    html.push('</div>');
+  }
+  html.push('</div>');
+  container.innerHTML = html.join('');
+}
+
+function renderTileSvg(tri, sigma, sizeOverride) {
+  const w = sizeOverride || TILE_SVG_W;
+  const h = sizeOverride || TILE_SVG_H;
+  const pad = sizeOverride ? Math.max(6, sizeOverride * 0.08) : TILE_PAD;
+  const parts = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`];
+
+  // Collect all T-edges
+  const edgeSet = new Set();
+  for (const t of tri) {
+    edgeSet.add(canonEdge(t[0], t[1]));
+    edgeSet.add(canonEdge(t[1], t[2]));
+    edgeSet.add(canonEdge(t[0], t[2]));
+  }
+  // Selected D edges (the user-clicked ones)
+  for (const key of edgeSet) {
+    const [a, b] = key.split(',').map(Number);
+    const [ax, ay] = DATA.coords[a];
+    const [bx, by] = DATA.coords[b];
+    const [x1, y1] = latticePos(ax, ay, w, h, pad);
+    const [x2, y2] = latticePos(bx, by, w, h, pad);
+    const isD = selectedEdges.has(key);
+    const stroke = isD ? '#2e6cff' : '#bbb';
+    const sw = isD ? 2.5 : 1;
+    parts.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}"/>`);
+  }
+  // Lattice points
+  const ptR = Math.max(1.5, w * 0.018);
+  for (let i = 0; i < DATA.coords.length; i++) {
+    const [x, y] = DATA.coords[i];
+    const [sx, sy] = latticePos(x, y, w, h, pad);
+    const fill = sigma[i] ? '#111' : '#fff';
+    const stroke = '#111';
+    parts.push(`<circle cx="${sx}" cy="${sy}" r="${ptR}" fill="${fill}" stroke="${stroke}" stroke-width="1"/>`);
+  }
+  parts.push('</svg>');
+  return parts.join('');
+}
+
+async function loadJsonWithProgress(url, label) {
+  startLoad(label);
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`fetch ${url} → ${resp.status}`);
+    return await resp.json();
+  } finally {
+    endLoad(label);
+  }
+}
+
+function init() {
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    selectedEdges.clear();
+    pendingVertex = null;
+    refreshEdgesAndMatch();
+    renderBoard();
+  });
+
+  // Render the board immediately using the hardcoded coords.
+  renderBoard();
+  refreshEdgesAndMatch();
+
+  // Fetch index.json (small, gives tris + pols for tile rendering).
+  loadJsonWithProgress('index.json', 'tile data').then(idx => {
+    DATA = idx;
+    // If realisations are already on screen as a placeholder, re-render.
+    refreshEdgesAndMatch();
+  }).catch(err => {
+    console.error('index.json load failed:', err);
+  });
+
+  // Fetch edges.json (10.7 MB) for d_idx lookup.
+  loadJsonWithProgress('edges.json', 'D index (10.7 MB)').then(edges => {
+    D_EDGES = edges;
+    KEY_TO_DIDX = new Map();
+    for (let i = 0; i < edges.length; i++) {
+      const keys = edges[i].map(([a, b]) => canonEdge(a, b));
+      const k = keys.sort((p, q) => {
+        const [pa, pb] = p.split(',').map(Number);
+        const [qa, qb] = q.split(',').map(Number);
+        return pa - qa || pb - qb;
+      }).map(e => e + ';').join('');
+      KEY_TO_DIDX.set(k, i);
+    }
+    // If the user already clicked some edges, do the lookup now.
+    refreshEdgesAndMatch();
+  }).catch(err => {
+    console.error('edges.json load failed:', err);
+  });
+}
+
+init();
+</script>
+</body>
+</html>

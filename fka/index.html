@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<meta http-equiv="speaker-type" speaker="text-html; charset=utf-8">
+<html>
+<head>
+    <title>Festkolloquium Martin Aigner</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript">
+        window.onload = function() {
+            document.getElementById('hidetitle').style.display = 'none';
+        };
+    </script>
+    <script type="text/javascript">
+        var imageURLs = [
+             "title1a.png"
+           , "title1b.png"
+           , "title1c.png"
+           , "title1d.png"
+           , "title1e.png"
+           , "title2a.png"
+           , "title2b.png"
+           , "title2c.png"
+           , "title2d.png"
+           , "title2e.png"
+           , "title3a.png"
+           , "title3b.png"
+           , "title3c.png"
+           , "title3d.png"
+           , "title3e.png"
+           , "title4a.png"
+           , "title4b.png"
+           , "title4c.png"
+           , "title4d.png"
+           , "title4e.png"
+           , "title5a.png"
+           , "title5b.png"
+           , "title5c.png"
+           , "title5d.png"
+           , "title5e.png"
+        ];
+        function getImageTag() {
+          var img = '<img src=\"';
+          var randomIndex = Math.floor(Math.random() * imageURLs.length);
+          img += imageURLs[randomIndex];
+          img += '\" alt=\"Martin Aigner Festkolloquium\" class=\"title\"/>';
+          return img;
+        }
+      </script>
+</head>
+
+<body>
+
+    <div class="date">November 7, 2022</div>
+
+    <img src="title2b.png" alt="Martin Aigner Festkolloquium" class="title" id="hidetitle">
+    <script type="text/javascript">
+        document.write(getImageTag());
+    </script>
+
+    <div class="portrait large" id="aigner"></div>
+    <p class="blurb">
+        A scientific celebration of the<br>
+        80th birthday of Martin Aigner
+        <!-- Celebrating the occassion<br>
+        of Martin Aigner's 80th birthday -->
+        <!-- We want to celebrate the occassion of Martin<br>
+        Aigner's 80th birthday with a Festkolloquium<br>
+        on the afternoon of November 7-->
+    </p>
+
+    <!-- <h2>date and time</h2>
+    <p>afternoon of November 7, 2022</p> -->
+	
+    <h2>location</h2>
+    <p>Zuse Institute Berlin<br>Lecture Hall</p>
+
+    <h2>program</h2> 
+
+    <div class="event">
+        <div class="time">14.00</div><p class="eventtitle">arrival and refreshments</p>
+    </div>
+
+
+    <div class="event">
+    <details>
+        <summary>
+            <div class="time">14.45</div>
+            <p class="talktitle">A Mathematical Journey Lined with Books</p> 
+            <a class="speaker" href="http://page.mi.fu-berlin.de/szabo/" target="blank">Tibor Szabó</a>
+        </summary>
+        <div class="portrait" id="szabo"></div>
+        <p class="speaker large">Tibor Szabó</p>
+        <p class="affiliation">FU Berlin</p>
+        <p class="abstract"></p>
+    </div>
+    
+    <div class="event">
+        <details>
+            <summary><div class="time">15.00</div><p
+        class="talktitle">On a few Random Extremal and Ramsey-Type Problems</p><a class="speaker"
+        href="https://www.math.uni-hamburg.de/home/schacht/"
+        target="blank">Mathias Schacht</a></summary>
+            <div class="portrait" id="schacht"></div>
+            <p class="speaker large">Mathias Schacht</p>
+            <p class="affiliation">University of Hamburg</p>
+            <p class="abstract"></p>
+            <!-- <p class="abstract">TBA</p> -->
+        </details>
+    </div>
+
+    <div class="event">
+       <div class="time">15.40</div><p class="eventtitle">break with coffee and cake</p>
+    </div>
+
+    <div class="event">
+        <details>
+            <summary><div class="time">16.20</div><p
+        class="talktitle">Random Order Types of Point Sets</p><a
+        class="speaker" href="https://people.inf.ethz.ch/emo/"
+        target="blank">Emo Welzl </a></summary>
+            <div class="portrait" id="welzl"></div>
+            <p class="speaker large">Emo Welzl</p>
+            <p class="affiliation">ETH Zürich</p>
+        <p class="abstract">The investigation of properties of random point sets has a long history, dating back to at least 1865 when J. J. Silvester posed his famous Four Point Problem. Clearly, properties depend on the underlying distribution, most prominently represented in the literature are sets obtained by sampling points uniformly from a convex region.
+
+Recently, with Xavier Goaoc, we looked at a more combinatorial distribution, namely point sets chosen uniformly from all simple order types of a given size. Roughly speaking, an order type is a class of point sets that cannot be discriminated by a typical convex hull algorithm (based on sidedness queries: "Does point p lie to the left of the oriented line through points q and r"). That is, the distribution is uniform on all possible inherently different inputs of convex hull algorithms.
+
+Among others, it can be shown that when sampling e.g. points uniformly from a disk in the plane, then the resulting order types are concentrated among all order types. In other words, one encounters only a vanishingly small part of all possible inputs to convex hull algorithms. In the course of the proofs one meets projective geometry, Felix Klein's characterization of subgroups of SO(3) (3-d rotation group), the Hairy Ball Theorem from topology, and Hadwiger's Transversal Theorem. </p> 
+        </details>
+    </div>
+
+    <div class="event">
+        <details>
+            <summary><div class="time">17.00</div><p
+        class="talktitle">Proofs from THE BOOK - an adventure</p><a
+        class="speaker"
+        href="https://www.mi.fu-berlin.de/math/groups/discgeom/ziegler/index.html"
+        target="blank">G&#252;nter M. Ziegler</a></summary>
+            <div class="portrait" id="ziegler"></div>
+            <p class="speaker large">G&#252;nter M. Ziegler</p>
+            <p class="affiliation">FU Berlin</p>
+            <p class="abstract">In the summer of 1994, Martin returned from a Graph Theory meeting in Oberwolfach, where he had met Paul Erdős, and confronted me with the idea to write up our modest version of "Proofs from THE BOOK."</p>
+        </details>
+    </div>
+
+    <div class="event">
+        <div class="time">17.40</div><p class="eventtitle">Sekt</p>
+    </div> 
+
+    <h2>organisation</h2>
+        <p class="organiser"><a href="http://www.mi.fu-berlin.de/en/math/groups/geokomb/People/Secretary/Nordt.html" target="blank">Sabrina Nordt</a>,
+        <a href="http://page.mi.fu-berlin.de/parczyk/" target="blank">Olaf Parczyk</a>,<br>
+        <a href="http://christophspiegel.berlin" target="blank">Christoph Spiegel</a> and
+        <a href="http://page.mi.fu-berlin.de/szabo/" target="blank">Tibor Szabó</a></p>
+
+    <div class="logos">
+        <a href="https://www.fu-berlin.de" target="blank"><img src="fu.png" alt="Logo der FU Berlin" class="logo"></a>
+  <a href="https://www.zib.de" target="blank"><img src="zib.png" alt="Logo des ZIB" class="logo"></a>
+    </div>
+    
+</body>
+
+</html>

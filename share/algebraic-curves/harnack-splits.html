@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>d=8 odd Harnack splits — §4.4 enumeration bug visualization</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 1.5em; max-width: 1400px; color: #222; }
+  h1 { font-size: 1.25em; font-weight: 600; margin: 0 0 1em 0; }
+  .layout { display: flex; gap: 2.5em; align-items: flex-start; }
+  .viz { flex: 0 0 auto; }
+  .list { flex: 1; max-width: 600px; }
+
+  .controls { font-size: 0.9em; margin-bottom: 0.5em; }
+  .controls label { margin-right: 1.2em; cursor: pointer; }
+
+  svg { background: #fafafa; border: 1px solid #ddd; display: block; }
+  .lattice-grid line { stroke: #e0e0e0; stroke-width: 0.5; }
+  .lattice-boundary { fill: none; stroke: #888; stroke-width: 1; }
+  .lattice-point { cursor: default; }
+  .lattice-label { font-size: 9px; fill: #444; pointer-events: none; user-select: none; }
+  .zone-fill { fill: #ffcc4d; fill-opacity: 0.35; pointer-events: none; }
+  .split-edge { stroke: #c0392b; stroke-width: 2; fill: none; pointer-events: none; }
+  .split-vertex { fill: #c0392b; stroke: white; stroke-width: 1; }
+  .interior-pt { stroke: #333; stroke-width: 0.7; }
+  .interior-pt.ee { stroke: #000; stroke-width: 2.5; }
+
+  .legend { font-size: 0.85em; margin-top: 0.8em; padding: 0.6em 0.8em; background: #f4f4f4; border-radius: 4px; line-height: 1.5; }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; border: 1px solid #333; }
+
+  .tbl-block { margin-bottom: 1.5em; }
+  .tbl-block:last-child { margin-bottom: 0; }
+  .tbl-block h3 { font-size: 1em; font-weight: 600; margin: 0; }
+  .tbl-block .canon { font-size: 0.8em; color: #666; margin: 0.4em 0 0.8em 0; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 0.85em; }
+  th, td { text-align: left; padding: 5px 10px; border-bottom: 1px solid #eee; }
+  th { background: #f4f4f4; font-weight: 600; user-select: none; }
+  td.m, th.m { text-align: right; font-variant-numeric: tabular-nums; width: 3em; }
+  tr.candidate { cursor: pointer; }
+  tr.candidate:hover { background: #f9f9f9; }
+  tr.candidate.selected { background: #fff4d6; }
+  tr.candidate.proof-listed td.tag { color: #2c7a3d; font-weight: 600; }
+  tr.candidate.proof-missed td.tag { color: #c0392b; font-weight: 600; }
+  tr.candidate.noop-correct td.tag { color: #777; }
+  tr.candidate.noop-other td.tag { color: #b08020; font-weight: 600; }
+  tr.candidate.non-mover { color: #888; }
+  tr.candidate.non-mover td.m { color: #888; }
+  tr.candidate.mover td.m { font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>d = 8 canonical odd Harnack splits</h1>
+
+<div class="layout">
+  <div class="viz">
+    <div class="controls">
+      <label><input type="radio" name="view" value="parity" checked> Parity classes</label>
+      <label><input type="radio" name="view" value="sign"> Sign distribution (Harnack η + twist)</label>
+    </div>
+    <svg id="svg" width="540" height="540" viewBox="-40 -40 580 580"></svg>
+    <div class="legend" id="legend-parity">
+      <div><span class="legend-dot" style="background:#3b82f6"></span> parity (0,0) — even-even</div>
+      <div><span class="legend-dot" style="background:#e74c3c"></span> parity (1,0) — x odd, y even (← base candidates)</div>
+      <div><span class="legend-dot" style="background:#22c55e"></span> parity (0,1) — x even, y odd (← apex candidates)</div>
+      <div><span class="legend-dot" style="background:#f0b429"></span> parity (1,1) — both odd</div>
+    </div>
+    <div class="legend" id="legend-sign" style="display:none">
+      <div><span class="legend-dot" style="background:#1d4ed8"></span> σ = + (Harnack: parity (0,0) by default)</div>
+      <div><span class="legend-dot" style="background:#dc2626"></span> σ = − (Harnack: all other parities)</div>
+      <div><span class="legend-dot" style="background:white;border:2px solid #000"></span> sign flipped by selected twist</div>
+    </div>
+  </div>
+
+  <div class="list">
+    <div class="tbl-block">
+      <h3>Simple splits</h3>
+      <p class="canon">(0, y)–(x, 0) with x, y odd, x ≥ y</p>
+      <table id="simple-candidates">
+        <thead>
+          <tr>
+            <th>(x, y)</th>
+            <th class="m">A</th>
+            <th class="m">B</th>
+            <th class="m">m</th>
+            <th class="tag">proof?</th>
+          </tr>
+        </thead>
+        <tbody id="simple-body"></tbody>
+      </table>
+    </div>
+
+    <div class="tbl-block">
+      <h3>Double splits</h3>
+      <p class="canon">(x₁, 0)–(x₂, y)–(x₃, 0) with x₁ &lt; x₃ odd, x₂ even ≥ 2, y odd</p>
+      <table id="candidates">
+        <thead>
+          <tr>
+            <th>(x₁, x₂, x₃, y)</th>
+            <th class="m">A</th>
+            <th class="m">B</th>
+            <th class="m">m</th>
+            <th class="tag">proof?</th>
+          </tr>
+        </thead>
+        <tbody id="cand-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const D = 8;
+const CELL = 60;  // pixels per unit
+function px(x, y) { return [x * CELL, (D - y) * CELL]; }  // y-axis flipped so y=0 at bottom
+
+const svg = document.getElementById('svg');
+
+// --- Draw lattice grid + boundary triangle ---
+const NS = "http://www.w3.org/2000/svg";
+const gridG = document.createElementNS(NS, 'g');
+gridG.setAttribute('class', 'lattice-grid');
+for (let i = 0; i <= D; i++) {
+  const [x0, y0] = px(i, 0); const [x1, y1] = px(i, D - i);
+  const v = document.createElementNS(NS, 'line');
+  v.setAttribute('x1', x0); v.setAttribute('y1', y0); v.setAttribute('x2', x1); v.setAttribute('y2', y1);
+  gridG.appendChild(v);
+  const [hx0, hy0] = px(0, i); const [hx1, hy1] = px(D - i, i);
+  const h = document.createElementNS(NS, 'line');
+  h.setAttribute('x1', hx0); h.setAttribute('y1', hy0); h.setAttribute('x2', hx1); h.setAttribute('y2', hy1);
+  gridG.appendChild(h);
+}
+svg.appendChild(gridG);
+
+// Boundary triangle
+const boundary = document.createElementNS(NS, 'polygon');
+const [bx0, by0] = px(0, 0); const [bx1, by1] = px(D, 0); const [bx2, by2] = px(0, D);
+boundary.setAttribute('points', `${bx0},${by0} ${bx1},${by1} ${bx2},${by2}`);
+boundary.setAttribute('class', 'lattice-boundary');
+svg.appendChild(boundary);
+
+// Zone fill (created later, redrawn on selection)
+const zoneG = document.createElementNS(NS, 'g'); zoneG.setAttribute('id', 'zone'); svg.appendChild(zoneG);
+const splitG = document.createElementNS(NS, 'g'); splitG.setAttribute('id', 'split'); svg.appendChild(splitG);
+const interiorG = document.createElementNS(NS, 'g'); interiorG.setAttribute('id', 'interior'); svg.appendChild(interiorG);
+
+// Lattice points
+function parityColor(i, j) {
+  const px = i % 2, py = j % 2;
+  if (px === 0 && py === 0) return '#3b82f6';
+  if (px === 1 && py === 0) return '#e74c3c';
+  if (px === 0 && py === 1) return '#22c55e';
+  return '#f0b429';
+}
+// Harnack baseline: + iff both coordinates even.
+function etaSign(i, j) { return (i % 2 === 0) && (j % 2 === 0); }
+function signColor(plus) { return plus ? '#1d4ed8' : '#dc2626'; }
+
+// Is (x, y) in the zone Z surrounded by split c?
+// Zone = strict interior of the surrounded region + boundary lattice
+// points of d·Δ_d that lie along the relevant arc, EXCLUDING split path nodes.
+function inZone(c, x, y) {
+  if (c.kind === 'simple') {
+    // Split path: (0, c.y)–(c.x, 0). Excluded.
+    if ((x === 0 && y === c.y) || (x === c.x && y === 0)) return false;
+    // Surrounded region: cut-off triangle (0,0)–(0,c.y)–(c.x,0).
+    // Includes the two axis arcs (excluding the two excluded vertices).
+    if (x < 0 || y < 0) return false;
+    return c.x * y + c.y * x < c.x * c.y;
+  } else {
+    // Double split path: (x1,0)–(x2,y)–(x3,0). Excluded.
+    if ((x === c.x1 && y === 0) || (x === c.x2 && y === c.y) || (x === c.x3 && y === 0)) return false;
+    const a = [c.x1, 0], b = [c.x2, c.y], d = [c.x3, 0];
+    function sgn(p, p1, p2) { return (p[0]-p2[0])*(p1[1]-p2[1]) - (p1[0]-p2[0])*(p[1]-p2[1]); }
+    const d1 = sgn([x,y], a, b), d2 = sgn([x,y], b, d), d3 = sgn([x,y], d, a);
+    const hN = d1 < 0 || d2 < 0 || d3 < 0;
+    const hP = d1 > 0 || d2 > 0 || d3 > 0;
+    if (hN && hP) return false;          // outside triangle
+    if (d1 === 0 || d2 === 0) return false;  // on split edges (excluded)
+    return true;  // strict interior OR on bottom x-axis segment (d3=0)
+  }
+}
+
+// For canonical {(1,0),(0,1)} splits: ε=1, i=j=1, so per §4.3:
+//   σ'(x) = σ(x) ⊕ 1 ⊕ (x_1 ⊕ x_2)
+// flip iff (1 ⊕ x_1 ⊕ x_2) = 1 iff (x_1 + x_2) even. Restricted to x ∈ Z.
+function flipsAt(x, y) { return (x + y) % 2 === 0; }
+function twistedSign(c, i, j) {
+  const base = etaSign(i, j);
+  if (!c || !inZone(c, i, j)) return { sign: base, flipped: false, inZ: false };
+  if (!flipsAt(i, j)) return { sign: base, flipped: false, inZ: true };
+  return { sign: !base, flipped: true, inZ: true };
+}
+
+const lpG = document.createElementNS(NS, 'g');
+lpG.setAttribute('id', 'lattice-pts');
+svg.appendChild(lpG);
+
+function renderLatticePoints() {
+  lpG.innerHTML = '';
+  const mode = document.querySelector('input[name=view]:checked').value;
+  const splitForSign = (mode === 'sign') ? selected : null;
+  for (let i = 0; i <= D; i++) {
+    for (let j = 0; j <= D - i; j++) {
+      const [cx, cy] = px(i, j);
+      const c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', cx); c.setAttribute('cy', cy);
+      if (mode === 'parity') {
+        c.setAttribute('r', 4);
+        c.setAttribute('fill', parityColor(i, j));
+      } else {
+        const t = twistedSign(splitForSign, i, j);
+        c.setAttribute('r', 5);
+        c.setAttribute('fill', signColor(t.sign));
+        if (t.flipped) {
+          c.setAttribute('stroke', '#000');
+          c.setAttribute('stroke-width', '2');
+        }
+      }
+      c.setAttribute('class', 'lattice-point');
+      c.setAttribute('title', `(${i}, ${j})`);
+      lpG.appendChild(c);
+      const t2 = document.createElementNS(NS, 'text');
+      t2.setAttribute('x', cx + 8); t2.setAttribute('y', cy - 6);
+      t2.setAttribute('class', 'lattice-label');
+      t2.textContent = `${i},${j}`;
+      lpG.appendChild(t2);
+    }
+  }
+}
+renderLatticePoints();
+
+// --- Enumerate canonical double splits ---
+// Bases (x_1, 0), (x_3, 0) with x_1 < x_3 both odd in {1,3,5,7}.
+// Apex (x_2, y) with x_2 even in {0,2,4,6,8}, y odd in {3,5,7}, x_2+y <= 8.
+// Both edges primitive: gcd(|x_2-x_1|, y) = 1 and gcd(|x_3-x_2|, y) = 1.
+
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+
+// Triangle (x1,0)-(x2,y)-(x3,0) — strict interior lattice points
+function interiorPoints(x1, x2, x3, y) {
+  // Sort bases so x_left < x_right
+  const xL = Math.min(x1, x3), xR = Math.max(x1, x3);
+  const pts = [];
+  // Edge from (x1, 0) to (x2, y): line y'(x) parameterised by t -> (x1 + t(x2-x1), t*y)
+  // Edge from (x2, y) to (x3, 0): line param (x2 + t(x3-x2), y - t*y)
+  // Bottom edge: y = 0 (from xL to xR)
+  // Point (i, j) is inside iff barycentric strictly positive.
+  // We use orientation tests.
+  function sign(p, a, b) {
+    return (p[0]-b[0])*(a[1]-b[1]) - (a[0]-b[0])*(p[1]-b[1]);
+  }
+  const a = [x1, 0], b = [x2, y], c = [x3, 0];
+  for (let i = 0; i <= D; i++) {
+    for (let j = 1; j <= D - i; j++) {  // j >= 1: above the bottom edge
+      const p = [i, j];
+      const d1 = sign(p, a, b), d2 = sign(p, b, c), d3 = sign(p, c, a);
+      const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+      const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+      // strict interior: all three sign-tests have the same (non-zero) sign.
+      if (hasNeg && hasPos) continue;  // mixed sign → outside the triangle
+      if (d1 === 0 || d2 === 0 || d3 === 0) continue;  // on edge
+      pts.push([i, j]);
+    }
+  }
+  return pts;
+}
+
+function enumerateCandidates() {
+  const out = [];
+  for (let x1 = 1; x1 <= 7; x1 += 2) {
+    for (let x3 = x1 + 1; x3 <= 7; x3++) {
+      if (x3 % 2 !== 1) continue;
+      // Apex must lie in the strict interior of A: x_2 >= 2 (apex on y-axis,
+      // x_2 = 0, decomposes algebraically into two simple Harnack splits with
+      // the same parity pair, so adds no new (p,n)-move and is presumed
+      // unintentional in the §4.3 definition).
+      for (let x2 = 2; x2 <= D; x2 += 2) {
+        for (let y = 3; y <= D - 1; y += 2) {
+          if (x2 + y > D) continue;
+          // Skip degenerate where apex coincides with a base column AND y small
+          if (gcd(Math.abs(x2 - x1), y) !== 1) continue;
+          if (gcd(Math.abs(x3 - x2), y) !== 1) continue;
+          const interior = interiorPoints(x1, x2, x3, y);
+          const total = interior.length;
+          const evenEven = interior.filter(([i, j]) => i % 2 === 0 && j % 2 === 0).length;
+          const m = total - 2 * evenEven;
+          out.push({ x1, x2, x3, y, interior, total, evenEven, m });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+const proofListedDouble = new Set([
+  '3,2,7,3', '1,2,7,3', '1,2,5,5'
+]);
+const proofListedSimple = new Set(['5,3', '7,3', '7,5']);
+
+// Interior of TRIANGLE (0,0)-(0,y)-(x,0) for simple splits
+function interiorPointsSimple(x, y) {
+  return interiorPoints(0, 0, x, y).filter(([i, j]) => true);
+}
+// Actually use the same routine: a simple split (0,y)-(x,0) cuts off triangle (0,0)-(0,y)-(x,0).
+// Use interiorPoints(x1=0, x2=0, x3=x, y) — but our interiorPoints expects triangle (x1,0)-(x2,y)-(x3,0).
+// With x1=0, x2=0, x3=x: triangle is (0,0)-(0,y)-(x,0). Works.
+function enumerateSimpleCandidates() {
+  const out = [];
+  for (let y = 1; y <= 7; y += 2) {
+    for (let x = y; x <= 7; x += 2) {  // x >= y (canonical reduction)
+      if (gcd(x, y) !== 1) continue;
+      const interior = interiorPoints(0, 0, x, y);
+      const total = interior.length;
+      const evenEven = interior.filter(([i, j]) => i % 2 === 0 && j % 2 === 0).length;
+      const m = total - 2 * evenEven;
+      out.push({ kind: 'simple', x, y, interior, total, evenEven, m });
+    }
+  }
+  return out;
+}
+
+const simpleCandidates = enumerateSimpleCandidates();
+simpleCandidates.sort((a, b) => Math.abs(b.m) - Math.abs(a.m) || (a.x*10+a.y) - (b.x*10+b.y));
+
+const candidates = enumerateCandidates();
+candidates.sort((a, b) => {
+  if (b.m !== a.m) return Math.abs(b.m) - Math.abs(a.m);
+  return [a.x1, a.x2, a.x3, a.y].toString().localeCompare([b.x1, b.x2, b.x3, b.y].toString());
+});
+
+// --- Render table ---
+const tbody = document.getElementById('cand-body');
+let selected = null;
+
+function isProofListed(c) {
+  if (c.kind === 'simple') return proofListedSimple.has(`${c.x},${c.y}`);
+  return proofListedDouble.has(`${c.x1},${c.x2},${c.x3},${c.y}`);
+}
+
+const simpleBody = document.getElementById('simple-body');
+
+// Classify the proof's handling of a candidate.
+// Returns one of: 'listed', or an object {tag, reason} for non-listed cases.
+//   noop-correct: m=0 AND covered by an explicit proof exclusion rule.
+//   noop-other:   m=0 BUT not covered by any rule.
+//   noop-wrong:   m≠0 but proof's no-op rule claims m=0 (false exclusion).
+function classifyCandidate(c) {
+  const isMover = c.m !== 0;
+  const listedFlag = isProofListed(c);
+  if (listedFlag) return 'listed';
+  if (c.kind === 'simple') {
+    if (c.y === 1) return { tag: 'noop-correct', reason: 'y=1 ⇒ no interior pts' };
+    if (isMover) return { tag: 'noop-wrong', reason: 'not listed' };
+    return { tag: 'noop-other', reason: 'not covered by proof' };
+  } else {
+    // Doubles
+    if (c.x3 - c.x1 === 2) {
+      if (isMover) return { tag: 'noop-wrong', reason: 'x₃=x₁+2 ⇒ m=0' };
+      return { tag: 'noop-correct', reason: 'x₃=x₁+2 ⇒ m=0' };
+    }
+    if (isMover) return { tag: 'noop-wrong', reason: 'not listed' };
+    return { tag: 'noop-other', reason: 'not covered by proof' };
+  }
+}
+
+function tagCell(cls, c) {
+  if (cls === 'listed') return { label: `m = ${c.m} ✓`, cssClass: 'proof-listed' };
+  if (typeof cls === 'object') {
+    if (cls.tag === 'noop-correct')
+      return { label: `m = 0 ✓ (${cls.reason})`, cssClass: 'noop-correct' };
+    if (cls.tag === 'noop-wrong')
+      return { label: `m = 0 ✗ (${cls.reason})`, cssClass: 'proof-missed' };
+    return { label: `— (${cls.reason})`, cssClass: 'noop-other' };
+  }
+  return { label: '–', cssClass: '' };
+}
+
+function renderTable() {
+  // ---- Simple splits ----
+  simpleBody.innerHTML = '';
+  for (const c of simpleCandidates) {
+    const cls = classifyCandidate(c);
+    const isMover = c.m !== 0;
+    const tag = tagCell(cls, c);
+    const tr = document.createElement('tr');
+    tr.className = 'candidate ' + (isMover ? 'mover ' : 'non-mover ') + tag.cssClass;
+    if (selected && c === selected) tr.classList.add('selected');
+    tr.innerHTML = `
+      <td>(${c.x}, ${c.y})</td>
+      <td class="m">${c.total}</td>
+      <td class="m">${c.evenEven}</td>
+      <td class="m">${c.m}</td>
+      <td class="tag">${tag.label}</td>
+    `;
+    tr.addEventListener('click', () => toggleSelect(c));
+    simpleBody.appendChild(tr);
+  }
+
+  // ---- Double splits ----
+  tbody.innerHTML = '';
+  for (const c of candidates) {
+    const cls = classifyCandidate(c);
+    const isMover = c.m !== 0;
+    const tag = tagCell(cls, c);
+    const tr = document.createElement('tr');
+    tr.className = 'candidate ' + (isMover ? 'mover ' : 'non-mover ') + tag.cssClass;
+    if (selected && c === selected) tr.classList.add('selected');
+    tr.innerHTML = `
+      <td>(${c.x1}, ${c.x2}, ${c.x3}, ${c.y})</td>
+      <td class="m">${c.total}</td>
+      <td class="m">${c.evenEven}</td>
+      <td class="m">${c.m}</td>
+      <td class="tag">${tag.label}</td>
+    `;
+    tr.addEventListener('click', () => toggleSelect(c));
+    tbody.appendChild(tr);
+  }
+}
+
+function toggleSelect(c) {
+  if (selected === c) {
+    selected = null;
+    renderTable();
+    drawSplit(null);
+  } else {
+    selected = c;
+    renderTable();
+    drawSplit(c);
+  }
+  renderLatticePoints();
+}
+
+function clearSplit() {
+  zoneG.innerHTML = '';
+  splitG.innerHTML = '';
+  interiorG.innerHTML = '';
+}
+
+function drawSplit(c) {
+  clearSplit();
+  if (!c) return;
+
+  let vertices;  // sequence of (i, j) defining the split path
+  let zoneTri;   // (i, j) triple of zone-triangle corners
+  if (c.kind === 'simple') {
+    vertices = [[0, c.y], [c.x, 0]];
+    zoneTri = [[0, 0], [0, c.y], [c.x, 0]];
+  } else {
+    vertices = [[c.x1, 0], [c.x2, c.y], [c.x3, 0]];
+    zoneTri = vertices;  // zone IS the triangle (x_1,0)-(x_2,y)-(x_3,0)
+  }
+
+  // Zone fill
+  const tri = document.createElementNS(NS, 'polygon');
+  tri.setAttribute('points', zoneTri.map(([i, j]) => {const [a, b] = px(i, j); return `${a},${b}`;}).join(' '));
+  tri.setAttribute('class', 'zone-fill');
+  zoneG.appendChild(tri);
+
+  // Split edges (path through the vertices)
+  for (let k = 0; k < vertices.length - 1; k++) {
+    const [x0, y0] = px(...vertices[k]);
+    const [x1, y1] = px(...vertices[k + 1]);
+    const e = document.createElementNS(NS, 'line');
+    e.setAttribute('x1', x0); e.setAttribute('y1', y0); e.setAttribute('x2', x1); e.setAttribute('y2', y1);
+    e.setAttribute('class', 'split-edge');
+    splitG.appendChild(e);
+  }
+
+  // Split vertices
+  for (const [i, j] of vertices) {
+    const [vx, vy] = px(i, j);
+    const v = document.createElementNS(NS, 'circle');
+    v.setAttribute('cx', vx); v.setAttribute('cy', vy); v.setAttribute('r', 6);
+    v.setAttribute('class', 'split-vertex');
+    splitG.appendChild(v);
+  }
+
+  // Interior lattice points — only in parity mode (sign mode uses its own flip-ring).
+  const mode = document.querySelector('input[name=view]:checked').value;
+  if (mode === 'parity') {
+    for (const [i, j] of c.interior) {
+      const [px_, py_] = px(i, j);
+      const r = document.createElementNS(NS, 'circle');
+      r.setAttribute('cx', px_); r.setAttribute('cy', py_); r.setAttribute('r', 6);
+      r.setAttribute('fill', parityColor(i, j));
+      const isEE = (i % 2 === 0) && (j % 2 === 0);
+      r.setAttribute('class', 'interior-pt' + (isEE ? ' ee' : ''));
+      interiorG.appendChild(r);
+    }
+  }
+}
+
+for (const r of document.querySelectorAll('input[name=view]')) {
+  r.addEventListener('change', () => {
+    const mode = document.querySelector('input[name=view]:checked').value;
+    document.getElementById('legend-parity').style.display = (mode === 'parity') ? '' : 'none';
+    document.getElementById('legend-sign').style.display   = (mode === 'sign')   ? '' : 'none';
+    drawSplit(selected);
+    renderLatticePoints();
+  });
+}
+
+renderTable();
+
+// Auto-select the canonical "missed" example
+const initial = candidates.find(c => c.x1 === 1 && c.x2 === 0 && c.x3 === 3 && c.y === 5);
+if (initial) { selected = initial; renderTable(); drawSplit(initial); renderLatticePoints(); }
+</script>
+</body>
+</html>

@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Graph Density Projections</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text x='8' y='13.5' font-size='15' text-anchor='middle'>▲</text></svg>" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <!-- MathJax for LaTeX in the hover tooltip (manual typeset, see main.js) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' },
+      startup: { typeset: false },
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+  <style>
+    /* ── Design tokens ───────────────────────────────────────────────────── */
+    :root {
+      /* Sidebar — light, neutral, quiet */
+      --sidebar-bg:      #f5f6f7;
+      --sidebar-fg:      #374151;
+      --sidebar-heading: #111827;
+      --sidebar-muted:   #9ca3af;
+      --sidebar-border:  rgba(0,0,0,0.08);
+      --sidebar-hover:   rgba(0,0,0,0.04);
+      --sidebar-w:       320px;
+
+      /* Form controls inside the sidebar */
+      --ctrl-bg:         #ffffff;
+      --ctrl-border:     rgba(0,0,0,0.14);
+      --ctrl-text:       #1f2937;
+      --ctrl-hover:      #f3f4f6;
+
+      /* Plot / page */
+      --bg:              #f9fafb;
+      --surface:         #ffffff;
+      --border:          rgba(0,0,0,0.09);
+      --text:            #111827;
+      --text-muted:      #6b7280;
+
+      /* Accent — used sparingly */
+      --accent:          #2563eb;
+
+      /* Status indicators */
+      --conjectured:     #dc2626;
+
+      --radius-sm:       4px;
+      --radius:          6px;
+
+      --shadow-side:     1px 0 0 var(--sidebar-border);
+      --shadow-float:    0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --sidebar-bg:      #1c1c1e;
+        --sidebar-fg:      #98989f;
+        --sidebar-heading: #e5e5ea;
+        --sidebar-muted:   #48484a;
+        --sidebar-border:  rgba(255,255,255,0.07);
+        --sidebar-hover:   rgba(255,255,255,0.04);
+
+        --ctrl-bg:         rgba(255,255,255,0.05);
+        --ctrl-border:     rgba(255,255,255,0.10);
+        --ctrl-text:       #e5e5ea;
+        --ctrl-hover:      rgba(255,255,255,0.08);
+
+        --bg:              #111111;
+        --surface:         #1c1c1e;
+        --border:          rgba(255,255,255,0.08);
+        --text:            #e5e5ea;
+        --text-muted:      #6b6b72;
+
+        --accent:          #60a5fa;
+
+        --conjectured:     #f87171;
+
+        --shadow-side:     1px 0 0 var(--sidebar-border);
+        --shadow-float:    0 4px 20px rgba(0,0,0,0.5);
+      }
+    }
+
+    /* Explicit overrides when the user toggles; win over prefers-color-scheme */
+    [data-theme="light"] {
+      --sidebar-bg:      #f5f6f7;
+      --sidebar-fg:      #374151;
+      --sidebar-heading: #111827;
+      --sidebar-muted:   #9ca3af;
+      --sidebar-border:  rgba(0,0,0,0.08);
+      --sidebar-hover:   rgba(0,0,0,0.04);
+      --ctrl-bg:         #ffffff;
+      --ctrl-border:     rgba(0,0,0,0.14);
+      --ctrl-text:       #1f2937;
+      --ctrl-hover:      #f3f4f6;
+      --bg:              #f9fafb;
+      --surface:         #ffffff;
+      --border:          rgba(0,0,0,0.09);
+      --text:            #111827;
+      --text-muted:      #6b7280;
+      --accent:          #2563eb;
+      --conjectured:     #dc2626;
+      --shadow-side:     1px 0 0 var(--sidebar-border);
+      --shadow-float:    0 4px 16px rgba(0,0,0,0.12);
+    }
+    [data-theme="dark"] {
+      --sidebar-bg:      #1c1c1e;
+      --sidebar-fg:      #98989f;
+      --sidebar-heading: #e5e5ea;
+      --sidebar-muted:   #48484a;
+      --sidebar-border:  rgba(255,255,255,0.07);
+      --sidebar-hover:   rgba(255,255,255,0.04);
+      --ctrl-bg:         rgba(255,255,255,0.05);
+      --ctrl-border:     rgba(255,255,255,0.10);
+      --ctrl-text:       #e5e5ea;
+      --ctrl-hover:      rgba(255,255,255,0.08);
+      --bg:              #111111;
+      --surface:         #1c1c1e;
+      --border:          rgba(255,255,255,0.08);
+      --text:            #e5e5ea;
+      --text-muted:      #6b6b72;
+      --accent:          #60a5fa;
+      --conjectured:     #f87171;
+      --shadow-side:     1px 0 0 var(--sidebar-border);
+      --shadow-float:    0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    /* ── Root layout ─────────────────────────────────────────────────────── */
+    #layout {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────────── */
+    #side {
+      width: var(--sidebar-w);
+      min-width: 250px;
+      max-width: 520px;
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-fg);
+      box-shadow: var(--shadow-side);
+      z-index: 20;
+      /* smooth mobile open/close */
+      transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Sidebar header ──────────────────────────────────────────────────── */
+    #side-header {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 16px 14px 13px;
+      border-bottom: 1px solid var(--sidebar-border);
+    }
+    #side-header h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--sidebar-heading);
+    }
+    /* hidden by default (main.js only shows it once window.BUILD_COMMIT is confirmed present —
+       i.e. never in local dev, where there's no CI-generated version.js) */
+    #build-version {
+      display: none;
+      font-size: 10px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      color: var(--sidebar-muted);
+      text-decoration: none;
+    }
+    #build-version:hover { text-decoration: underline; }
+    /* shared style for icon buttons in the sidebar header */
+    .hdr-btn {
+      flex: none;
+      width: 28px; height: 28px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--sidebar-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .hdr-btn:hover { background: var(--sidebar-hover); color: var(--sidebar-fg); }
+    .hdr-btn svg { width: 16px; height: 16px; }
+
+    #side-close {
+      display: none;          /* shown only on mobile */
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    /* ── Sidebar scrollable body ─────────────────────────────────────────── */
+    #side-inner {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    #side-inner::-webkit-scrollbar { width: 3px; }
+    #side-inner::-webkit-scrollbar-track { background: transparent; }
+    #side-inner::-webkit-scrollbar-thumb {
+      background: var(--sidebar-border);
+      border-radius: 2px;
+    }
+
+    /* ── Controls ────────────────────────────────────────────────────────── */
+    #controls {
+      padding: 12px 14px 0;
+    }
+
+    /* Mode pill group */
+    /* Labeled segmented controls (View / Axes / Complements / Surfaces). The short label replaces
+       the old hairline separators as the visual grouping cue. */
+    .segblock { margin-bottom: 10px; }
+    .seglabel { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--sidebar-muted); margin: 0 0 4px 3px; }
+    .segctl {
+      display: flex;
+      background: var(--ctrl-bg);
+      border: 1px solid var(--ctrl-border);
+      border-radius: var(--radius);
+      padding: 3px;
+      gap: 2px;
+    }
+    .segctl button {
+      flex: 1;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 2px;
+      border: none;
+      background: transparent;
+      color: var(--sidebar-muted);
+      cursor: pointer;
+      border-radius: calc(var(--radius) - 2px);
+      white-space: nowrap;
+      transition: background 0.14s, color 0.14s;
+    }
+    .segctl button:hover { background: var(--ctrl-hover); color: var(--sidebar-fg); }
+    .segctl button.on { background: var(--accent); color: #fff; }
+    .segctl button:disabled { opacity: 0.4; cursor: default; }
+    .segctl button:disabled:hover { background: transparent; color: var(--sidebar-muted); }
+
+    /* Axis rows */
+    .ctrl-panel label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 6px 0;
+      font-size: 13px;
+      color: var(--sidebar-fg);
+    }
+    .ctrl-panel label > span {
+      font-size: 12px;
+      color: var(--sidebar-muted);
+      min-width: 34px;
+    }
+    .ctrl-panel select {
+      flex: 1 1 auto;
+      min-width: 0;
+      font: inherit;
+      font-size: 13px;
+      background: var(--ctrl-bg);
+      color: var(--ctrl-text);
+      border: 1px solid var(--ctrl-border);
+      border-radius: var(--radius-sm);
+      padding: 7px 4px;
+      cursor: pointer;
+      outline: none;
+      appearance: auto;
+    }
+    .ctrl-panel select:focus { border-color: var(--accent); }
+    /* per-axis min/max limit inputs, on the same row as the dropdown */
+    .axlim {
+      flex: 0 0 40px;
+      width: 40px;
+      font: inherit;
+      font-size: 11.5px;
+      text-align: center;
+      background: var(--ctrl-bg);
+      color: var(--ctrl-text);
+      border: 1px solid var(--ctrl-border);
+      border-radius: var(--radius-sm);
+      padding: 7px 3px;
+      outline: none;
+    }
+    .axlim:focus { border-color: var(--accent); }
+    .axlim::placeholder { color: var(--sidebar-muted); opacity: 0.6; font-size: 10.5px; }
+
+    /* Slice field */
+    /* slice row: "slice [axis] = [− value +]" on one line; slider on the next */
+    .slicerow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 6px 0;
+    }
+    .slicerow > span:first-child {
+      font-size: 12px;
+      color: var(--sidebar-muted);
+      min-width: 34px;
+    }
+    /* Same themed appearance as .ctrl-panel select (background/color/border must be explicit here
+       too — without it the browser falls back to its own native light/dark rendering, driven by
+       the page's color-scheme meta tag + OS preference, ignoring the app's own theme toggle
+       entirely). Capped + truncated (ellipsis) regardless of which axis is selected — a handful of
+       entries (e.g. phi's compact formula) stay long even without their bracketed name, and this
+       row has the value stepper to share space with; the full text is still on hover via title=. */
+    .slicerow select {
+      flex: 0 0 auto;
+      min-width: 0;
+      max-width: 84px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font: inherit;
+      font-size: 13px;
+      background: var(--ctrl-bg);
+      color: var(--ctrl-text);
+      border: 1px solid var(--ctrl-border);
+      border-radius: var(--radius-sm);
+      padding: 7px 4px;
+      cursor: pointer;
+      outline: none;
+      appearance: auto;
+    }
+    .slicerow select:focus { border-color: var(--accent); }
+    .slicerow .eq { flex: 0 0 auto; color: var(--sidebar-muted); font-size: 13px; }
+    .slicerow .stepper { flex: 1 1 auto; }
+
+    .stepper {
+      display: flex;
+      height: 30px;
+      border: 1px solid var(--ctrl-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .stepper .step {
+      width: 30px;
+      flex: none;
+      background: var(--ctrl-bg);
+      border: none;
+      color: var(--sidebar-fg);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.1s;
+    }
+    .stepper .step:hover  { background: var(--ctrl-hover); }
+    .stepper .step:active { filter: brightness(0.92); }
+
+    /* Restriction rows: "[axis] = [− value +] [×]" — one per entry in `restrictions`, reusing
+       .slicerow's layout plus a small remove button. */
+    .restriction-row { margin: 6px 0 10px; }
+    .restriction-row .r-remove {
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      font: inherit;
+      font-size: 14px;
+      line-height: 1;
+      border: 1px solid var(--ctrl-border);
+      border-radius: 999px;
+      background: var(--ctrl-bg);
+      color: var(--sidebar-muted);
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.13s, color 0.13s, border-color 0.13s;
+    }
+    .restriction-row .r-remove:hover { background: var(--ctrl-hover); color: var(--sidebar-fg); border-color: var(--accent); }
+    #add-restriction {
+      display: block;
+      width: 100%;
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 7px 4px;
+      margin-top: 2px;
+      border: 1px dashed var(--ctrl-border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--sidebar-muted);
+      cursor: pointer;
+      transition: background 0.13s, color 0.13s, border-color 0.13s;
+    }
+    #add-restriction:hover { background: var(--ctrl-hover); color: var(--sidebar-fg); border-color: var(--accent); }
+    /* Every stepper's number field (the restriction-row value entry) — was #cnum-specific back
+       when there was exactly one global slice slider; now one per restriction row. */
+    .stepper input {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+      font: inherit;
+      font-size: 13px;
+      background: var(--ctrl-bg);
+      color: var(--ctrl-text);
+      border: none;
+      border-left: 1px solid var(--ctrl-border);
+      border-right: 1px solid var(--ctrl-border);
+      padding: 0 4px;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    .stepper input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+    .stepper input::-webkit-outer-spin-button,
+    .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+
+    /* Reset — floating group in the plot's top-right corner. Collapsed it shows the ↺ tab;
+       on hover (or keyboard focus) it unfolds two options leftward: Camera (view) and All (wipe). */
+    #reset-group {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      flex-direction: row-reverse;   /* tab on the right; options unfold to its left */
+    }
+    #reset-tab, .reset-opt {
+      font: inherit;
+      font-size: 11px;
+      border: 1px solid var(--ctrl-border);
+      border-radius: 999px;
+      background: var(--ctrl-bg);
+      color: var(--text-muted);
+      backdrop-filter: blur(3px);
+      user-select: none;
+      white-space: nowrap;
+    }
+    #reset-tab {
+      padding: 4px 10px;
+      opacity: 0.75;
+      cursor: pointer;   /* tappable on touch — toggles .open */
+      transition: opacity 0.13s;
+    }
+    #reset-group:hover #reset-tab, #reset-group:focus-within #reset-tab, #reset-group.open #reset-tab { opacity: 1; }
+    .reset-opt {
+      cursor: pointer;
+      overflow: hidden;
+      max-width: 0;
+      padding: 4px 0;
+      margin-right: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: max-width 0.18s, padding 0.18s, margin-right 0.18s, opacity 0.18s, color 0.13s, border-color 0.13s;
+    }
+    #reset-group:hover .reset-opt, #reset-group:focus-within .reset-opt, #reset-group.open .reset-opt {
+      max-width: 90px;
+      padding: 4px 10px;
+      margin-right: 6px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .reset-opt:hover { color: var(--accent); border-color: var(--accent); }
+    #reset-all:hover { color: #d9534f; border-color: #d9534f; }   /* destructive tint only on All */
+
+    /* ── Sheets list ─────────────────────────────────────────────────────── */
+    #sheets { padding: 8px 0 16px; }
+
+    .khdr {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 14px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--sidebar-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .khdr:hover { color: var(--sidebar-fg); }
+    .khdr:first-child { padding-top: 6px; }
+    .khdr-arrow { font-size: 9px; line-height: 1; opacity: 0.7; transition: transform 0.12s; }
+    .khdr.collapsed .khdr-arrow { transform: rotate(-90deg); }
+    .khdr-label { flex: 1; }
+    /* Per-section All/None/Default — same text-only-button treatment the old global toolbar used,
+       but compact enough to sit inline in the (uppercase, letter-spaced) section header; reset both
+       so the buttons read as normal-case words, not shouted. */
+    .khdr-actions {
+      display: flex;
+      gap: 2px;
+      font-weight: 500;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+    .khdr-actions button {
+      font: inherit;
+      font-size: 10px;
+      padding: 2px 5px;
+      border: none;
+      background: none;
+      border-radius: var(--radius-sm);
+      color: var(--sidebar-muted);
+      cursor: pointer;
+      transition: background 0.13s, color 0.13s;
+      white-space: nowrap;
+    }
+    .khdr-actions button:hover { background: var(--sidebar-hover); color: var(--sidebar-fg); }
+    .khdr-actions button:active { color: var(--accent); }
+
+    .sheet {
+      position: relative;
+      padding: 6px 14px 6px 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s, opacity 0.15s;
+    }
+    .sheet::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--sheet-color, transparent);
+      border-radius: 0 2px 2px 0;
+      transition: width 0.15s ease;
+    }
+    .sheet:hover { background: var(--sidebar-hover); }
+    .sheet:hover::before { width: 7px; }
+    .sheet.off { opacity: 0.38; }
+
+    .sheet-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--sidebar-fg);
+    }
+    .sheet-icon { flex: none; width: 16px; height: 12px; display: inline-flex; }
+    .sheet-icon svg { width: 16px; height: 12px; display: block; }
+    .sheet-name { flex: 1; min-width: 0; }   /* take remaining width, push the pill to the right */
+    /* "!" flag on an open / unproven entry — red badge by the name; hover shows the note. */
+    .open-flag {
+      flex: none;
+      margin-right: auto;          /* keep it by the name, push the pill to the right */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #e8000d;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: help;
+    }
+    /* Per-item type pill: a small right-aligned badge after the name. */
+    .tag {
+      flex: none;
+      white-space: nowrap;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+      padding: 3px 7px;
+      border-radius: 999px;
+      color: var(--tag-fg);
+      background: color-mix(in srgb, var(--tag-fg) 16%, transparent);
+    }
+    .tag-bound        { --tag-fg: #5b7cb5; }   /* blue  — flag-algebra (FA) bound */
+    .tag-tight        { --tag-fg: #4a9c6d; }   /* green — proven extremal boundary (the bound is tight) */
+    .tag-construction { --tag-fg: #c8a000; }   /* yellow — explicit family, not yet proven tight (conjectural) */
+    .tag-reference    { --tag-fg: #9aa0a8; }   /* grey  — not a construction */
+    .tag-ineq         { --tag-fg: #17a2b8; }   /* teal  — proven analytic bound (inequality surface) */
+    .tag-lp           { --tag-fg: #6a4cc7; }   /* indigo — level-n LP outer relaxation (proven outer bound) */
+
+    .muted {
+      font-size: 12px;
+      color: var(--sidebar-muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* ── Resize dragger ──────────────────────────────────────────────────── */
+    #dragger {
+      width: 4px;
+      flex: none;
+      background: var(--border);
+      cursor: col-resize;
+      transition: background 0.15s;
+      z-index: 10;
+      position: relative;
+    }
+    #dragger::after {
+      content: '';
+      position: absolute;
+      inset: 0 -4px;   /* widen the hit target */
+    }
+    #dragger:hover,
+    #dragger.dragging { background: var(--accent); }
+
+    /* ── Plot area ───────────────────────────────────────────────────────── */
+    #plot-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    #plot { position: absolute; inset: 0; touch-action: none; }  /* let the plot own touch gestures */
+
+    /* ── Loading overlay ─────────────────────────────────────────────────── */
+    #loading {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 13px;
+      transition: opacity 0.2s;
+    }
+    #loading.hidden { display: none; }
+
+    .spinner {
+      width: 26px; height: 26px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    #loading.error .spinner { display: none; }
+    #loading.error #loadmsg {
+      color: var(--conjectured);
+      max-width: 60%;
+      text-align: center;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation: none; border-top-color: var(--accent); }
+    }
+
+    /* ── No-data indicator (top-center of the plot) — a visible "nothing to show" state instead of
+       a silent blank canvas, e.g. picking a 4-vertex axis while no enabled sheet has 4-vertex data. */
+    #no-data {
+      display: none;
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8;
+      max-width: 70%;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12.5px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+    #no-data.show { display: block; }
+
+    /* ── 3D navigation help (bottom-right of the plot) ───────────────────── */
+    #nav-help {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      z-index: 5;
+      font-size: 10.5px;
+      line-height: 1.5;
+      text-align: right;
+      color: var(--text-muted);
+      opacity: 0.72;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* ── Custom hover tooltip ────────────────────────────────────────────── */
+    #tip {
+      position: fixed;
+      z-index: 60;
+      left: 0; top: 0;
+      max-width: 340px;
+      padding: 11px 13px;
+      border-radius: 9px;
+      background: rgba(24, 26, 32, 0.9);
+      color: #fff;
+      font-size: 12.5px;
+      line-height: 1.5;
+      box-shadow: 0 6px 26px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(3px);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+    #tip.show { opacity: 1; }
+    #tip-head .tip-title {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    #tip-head .tip-desc {
+      color: #fff;
+      margin-bottom: 9px;
+    }
+    #tip-body {
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      padding-top: 8px;
+      color: #d7dbe2;
+      font-variant-numeric: tabular-nums;
+    }
+    /* legend hover has no densities body — drop the empty body so there's no trailing divider line */
+    #tip-body:empty { display: none; }
+    #tip-head:has(+ #tip-body:empty) .tip-desc { margin-bottom: 0; }
+    #tip-body .tip-div {
+      margin-top: 7px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    #tip-body .tip-label {
+      display: block;
+      font-size: 9.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8b909b;
+      margin-bottom: 3px;
+    }
+    /* keep MathJax inline and inheriting the tooltip colour */
+    #tip mjx-container { color: inherit; margin: 0 !important; }
+
+    /* ── Hamburger (mobile only) ─────────────────────────────────────────── */
+    #hamburger {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      width: 38px; height: 38px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--sidebar-bg);
+      color: var(--sidebar-heading);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-float);
+      transition: background 0.15s;
+    }
+    #hamburger:hover { background: var(--sidebar-heading); color: var(--sidebar-bg); }
+    #hamburger svg { width: 18px; height: 18px; }
+
+    /* Mobile overlay backdrop */
+    #side-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 19;
+      backdrop-filter: blur(2px);
+    }
+
+    /* ── Desktop collapsed state ─────────────────────────────────────────── */
+    /* Dragging the sidebar below its minimum collapses it to the hamburger, even on desktop. */
+    @media (min-width: 769px) {
+      body.sidebar-collapsed #side      { display: none; }
+      body.sidebar-collapsed #dragger   { display: none; }
+      body.sidebar-collapsed #hamburger { display: flex; }
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      #hamburger                   { display: flex; }
+      body.sidebar-open #hamburger { display: none; }
+      #dragger                     { display: none; }
+      #side-close                  { display: flex; }
+
+      #side {
+        position: fixed;
+        inset: 0 0 0 auto;
+        width: 100% !important;
+        max-width: 100%;
+        transform: translateX(-100%);
+        z-index: 20;
+      }
+      body.sidebar-open #side          { transform: translateX(0); }
+      body.sidebar-open #side-backdrop { display: block; }
+
+      #plot-wrap { position: fixed; inset: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="layout">
+
+    <!-- ── Sidebar ── -->
+    <aside id="side">
+      <div id="side-header">
+        <div>
+          <h1>Graph Density Projections</h1>
+          <!-- populated by main.js from window.BUILD_COMMIT (set by version.js, CI-generated —
+               absent in local dev, in which case this just stays hidden) -->
+          <a id="build-version" href="#" target="_blank" rel="noopener"></a>
+        </div>
+        <div style="display:flex;gap:6px;flex:none;align-items:center">
+          <button id="btn-theme" class="hdr-btn" aria-label="Theme: light, dark, or system">
+            <!-- the icon of the CURRENT mode is shown; clicking cycles light → dark → system -->
+            <!-- sun icon (light mode) -->
+            <svg id="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                 stroke-width="1.6" stroke-linecap="round">
+              <circle cx="8" cy="8" r="3"/>
+              <line x1="8" y1="1" x2="8" y2="2.5"/>
+              <line x1="8" y1="13.5" x2="8" y2="15"/>
+              <line x1="1" y1="8" x2="2.5" y2="8"/>
+              <line x1="13.5" y1="8" x2="15" y2="8"/>
+              <line x1="3.05" y1="3.05" x2="4.1" y2="4.1"/>
+              <line x1="11.9" y1="11.9" x2="12.95" y2="12.95"/>
+              <line x1="12.95" y1="3.05" x2="11.9" y2="4.1"/>
+              <line x1="4.1" y1="11.9" x2="3.05" y2="12.95"/>
+            </svg>
+            <!-- moon icon (dark mode) -->
+            <svg id="icon-moon" viewBox="0 0 16 16" fill="currentColor" style="display:none">
+              <path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6.5 6.5 0 1 0 8 8z"/>
+            </svg>
+            <!-- monitor icon (system mode — follows the OS preference) -->
+            <svg id="icon-system" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                 stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <rect x="2" y="3" width="12" height="8" rx="1"/>
+              <line x1="6" y1="14" x2="10" y2="14"/>
+              <line x1="8" y1="11" x2="8" y2="14"/>
+            </svg>
+          </button>
+          <button id="side-close" class="hdr-btn" aria-label="Close menu">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round">
+              <line x1="3" y1="3" x2="13" y2="13"/>
+              <line x1="13" y1="3" x2="3" y2="13"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="side-inner">
+        <div id="controls">
+
+          <!-- Dims toggle: everything is inherently a projection — 2D or 3D is the only mode-like
+               choice; which axes fill which slot, and how many restrictions narrow the view, are
+               free choices below, not separate modes. -->
+          <div class="segblock">
+            <div class="seglabel">View</div>
+            <div id="dims" class="segctl">
+              <button id="d2btn">2D</button>
+              <button id="d3btn" class="on">3D</button>
+            </div>
+          </div>
+
+          <!-- Complements / Surfaces render-mode toggles: built in renderRenderControls (main.js),
+               same labeled-segmented style as View, mounted here (ahead of Axes) so they read as
+               global render settings before the per-axis/restriction pickers. Renders immediately
+               at startup (independent of the manifest fetch), unlike Axes/the legend below. -->
+          <div id="render-controls"></div>
+
+          <!-- Explicit per-slot pickers, always shown (2 or 3, sized to View). -->
+          <div class="segblock">
+            <div class="seglabel">Axes</div>
+            <div id="ax-slots" class="ctrl-panel"></div>
+          </div>
+
+          <!-- Restrictions: zero or more "[axis] = [value]" hyperplane cuts, freely added/removed.
+               0 = plain projection, 1 = a classic slice, 2+ = a further reduction. -->
+          <div class="segblock">
+            <div class="seglabel">Restrictions</div>
+            <div id="restrictions"></div>
+            <button id="add-restriction" type="button">+ Add restriction</button>
+          </div>
+
+        </div><!-- /#controls -->
+        <div id="sheets"></div>
+      </div><!-- /#side-inner -->
+    </aside>
+
+    <!-- ── Resize dragger ── -->
+    <div id="dragger" role="separator" aria-label="Resize sidebar"></div>
+
+    <!-- ── Plot ── -->
+    <div id="plot-wrap">
+      <div id="plot"></div>
+      <div id="reset-group">
+        <span id="reset-tab" tabindex="0" title="Reset — hover for options">↺ Reset</span>
+        <button id="reset-all" class="reset-opt" title="Reset everything to defaults (view, theme, sidebar) and reload">All</button>
+        <button id="reset-cam" class="reset-opt" title="Reset the camera / view only">Camera</button>
+      </div>
+      <div id="nav-help">
+        drag rotate · scroll zoom · ⇧-drag pan<br>
+        arrows rotate · ⇧+arrows pan · +/− zoom · R / dbl-click reset
+      </div>
+      <div id="no-data">No selected sheet has data for this axis combination — try a different axis, or enable a sheet that does (e.g. Huang et al. for 4-vertex axes).</div>
+      <div id="loading">
+        <div class="spinner"></div>
+        <div id="loadmsg">Loading…</div>
+      </div>
+    </div>
+
+  </div><!-- /#layout -->
+
+  <!-- Custom hover tooltip (rounded, padded, MathJax) — driven by main.js -->
+  <div id="tip" aria-hidden="true">
+    <div id="tip-head"></div>
+    <div id="tip-body"></div>
+  </div>
+
+  <!-- Mobile backdrop (outside layout so it covers everything) -->
+  <div id="side-backdrop"></div>
+
+  <!-- Hamburger button -->
+  <button id="hamburger" aria-label="Open menu">
+    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor"
+         stroke-width="1.8" stroke-linecap="round">
+      <line x1="2" y1="5"  x2="16" y2="5"/>
+      <line x1="2" y1="9"  x2="16" y2="9"/>
+      <line x1="2" y1="13" x2="16" y2="13"/>
+    </svg>
+  </button>
+
+  <script>
+    // ── Sidebar collapse / expand (shared; desktop) ──────────────────────
+    const CKEY = 'gpv-sidebar-collapsed';
+    const collapseSidebar = () => { document.body.classList.add('sidebar-collapsed'); localStorage.setItem(CKEY, '1'); };
+    const expandSidebar   = () => { document.body.classList.remove('sidebar-collapsed'); localStorage.setItem(CKEY, '0'); };
+    if (localStorage.getItem(CKEY) === '1') document.body.classList.add('sidebar-collapsed');
+
+    // ── Sidebar resize (desktop) ─────────────────────────────────────────
+    (function () {
+      const side = document.getElementById('side');
+      const dragger = document.getElementById('dragger');
+      // MIN_W = the smallest docked width; drag below COLLAPSE_AT and the sidebar collapses.
+      const MIN_W = 250, MAX_W = 520, COLLAPSE_AT = 200, KEY = 'gpv-sidebar-w3';  // bumped: reset stale saved widths to the 320 default
+      const saved = parseInt(localStorage.getItem(KEY), 10);
+      if (saved >= MIN_W && saved <= MAX_W) side.style.width = saved + 'px';
+
+      let dragging = false, x0, w0;
+      const endDrag = () => {
+        if (!dragging) return;
+        dragging = false;
+        dragger.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem(KEY, side.offsetWidth);
+      };
+      dragger.addEventListener('mousedown', (e) => {
+        dragging = true; x0 = e.clientX; w0 = side.offsetWidth;
+        dragger.classList.add('dragging');
+        document.body.style.cssText += ';user-select:none;cursor:col-resize';
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const target = w0 + e.clientX - x0;
+        if (target < COLLAPSE_AT) {        // pulled past the minimum → collapse to the hamburger
+          endDrag();
+          collapseSidebar();
+          return;
+        }
+        side.style.width = Math.min(MAX_W, Math.max(MIN_W, target)) + 'px';
+      });
+      document.addEventListener('mouseup', endDrag);
+    })();
+
+    // ── Theme toggle: light → dark → system (auto) ───────────────────────
+    (function () {
+      const KEY = 'gpv-theme';
+      const root = document.documentElement;
+      const btn  = document.getElementById('btn-theme');
+      const icons = {
+        light:  document.getElementById('icon-sun'),
+        dark:   document.getElementById('icon-moon'),
+        system: document.getElementById('icon-system'),
+      };
+      const ORDER = ['light', 'dark', 'system'];
+      const LABEL = { light: 'Light', dark: 'Dark', system: 'System' };
+
+      const sysDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
+      // Stored value is the explicit mode; anything else (incl. absent) means follow the system.
+      const getMode = () => { const t = localStorage.getItem(KEY); return ORDER.includes(t) ? t : 'system'; };
+
+      const apply = (mode) => {
+        const dark = mode === 'system' ? sysDark() : mode === 'dark';
+        root.dataset.theme = dark ? 'dark' : 'light';
+        for (const k in icons) icons[k].style.display = (k === mode) ? 'block' : 'none';
+        btn.setAttribute('aria-label', `Theme: ${LABEL[mode]} (click to change)`);
+        btn.title = `Theme: ${LABEL[mode]}`;
+      };
+
+      apply(getMode());
+
+      btn.addEventListener('click', () => {
+        const next = ORDER[(ORDER.indexOf(getMode()) + 1) % ORDER.length];
+        localStorage.setItem(KEY, next);
+        apply(next);
+      });
+
+      // Keep in sync if the OS preference changes while we are following it
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (getMode() === 'system') apply('system');
+      });
+    })();
+
+    // ── Mobile hamburger ─────────────────────────────────────────────────
+    (function () {
+      const btn      = document.getElementById('hamburger');
+      const closeBtn = document.getElementById('side-close');
+      const backdrop = document.getElementById('side-backdrop');
+      const open  = () => document.body.classList.add('sidebar-open');
+      const close = () => document.body.classList.remove('sidebar-open');
+      const mobile = () => window.matchMedia('(max-width: 768px)').matches;
+      // Mobile: slide in the overlay. Desktop (collapsed): re-dock the sidebar.
+      btn.addEventListener('click', () => { mobile() ? open() : expandSidebar(); });
+      closeBtn.addEventListener('click', close);
+      backdrop.addEventListener('click', close);
+      // close on Escape
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    })();
+  </script>
+
+  <script>
+    // cache-bust so a redeploy is never masked by a stale browser copy. version.js (CI-generated,
+    // absent in local dev — main.js handles that) must run before main.js so window.BUILD_COMMIT is
+    // set in time for the sidebar to read it; dynamically-created script elements default to async
+    // (execution order NOT guaranteed to match insertion order) unless .async is explicitly disabled.
+    var v = document.createElement('script');
+    v.src = 'version.js?t=' + Date.now();
+    v.async = false;
+    document.body.appendChild(v);
+    var s = document.createElement('script');
+    s.src = 'main.js?t=' + Date.now();
+    s.async = false;
+    document.body.appendChild(s);
+  </script>
+</body>
+</html>
