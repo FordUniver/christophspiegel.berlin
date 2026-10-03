@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 330" role="img" aria-labelledby="title description">
+  <title id="title">A tree on six vertices</title>
+  <desc id="description">Six dark circular vertices connected by five blue edges in a branching tree.</desc>
+  <rect width="720" height="330" rx="16" fill="#fbfbf9"/>
+  <g fill="none" stroke="#245f87" stroke-width="7" stroke-linecap="round">
+    <line x1="112" y1="165" x2="270" y2="165"/>
+    <line x1="270" y1="165" x2="420" y2="82"/>
+    <line x1="270" y1="165" x2="420" y2="248"/>
+    <line x1="420" y1="82" x2="594" y2="82"/>
+    <line x1="420" y1="248" x2="594" y2="248"/>
+  </g>
+  <g fill="#182026" stroke="#fbfbf9" stroke-width="8">
+    <circle cx="112" cy="165" r="17"/>
+    <circle cx="270" cy="165" r="17"/>
+    <circle cx="420" cy="82" r="17"/>
+    <circle cx="420" cy="248" r="17"/>
+    <circle cx="594" cy="82" r="17"/>
+    <circle cx="594" cy="248" r="17"/>
+  </g>
+</svg>

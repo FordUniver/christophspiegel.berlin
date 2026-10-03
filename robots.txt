@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /share/
+
+Sitemap: https://christophspiegel.berlin/sitemap.xml
