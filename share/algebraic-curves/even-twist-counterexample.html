@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>d=4 counter-example: even surgical twist destroys an oval</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 1.5em auto; max-width: 1200px; padding: 0 1em; color: #222; line-height: 1.5; }
+  h1 { font-size: 1.3em; font-weight: 600; margin: 0 0 0.3em 0; }
+  h2 { font-size: 1.05em; font-weight: 600; margin: 1.5em 0 0.4em 0; padding-bottom: 0.2em; border-bottom: 1px solid #ddd; }
+  .lede { color: #555; margin-bottom: 1em; }
+  .row { display: flex; gap: 1.5em; align-items: flex-start; flex-wrap: wrap; }
+  .panel { flex: 0 0 auto; }
+  .panel-caption { font-size: 0.85em; color: #555; margin-top: 0.3em; text-align: center; max-width: 360px; }
+  svg { background: #fafafa; border: 1px solid #ddd; display: block; }
+  .grid line { stroke: #e8e8e8; stroke-width: 0.5; }
+  .boundary { fill: none; stroke: #888; stroke-width: 1; }
+  .tri-edge { stroke: #aaa; stroke-width: 0.7; fill: none; }
+  .tri-edge-req { stroke: #c0392b; stroke-width: 2.5; fill: none; }
+  .zone-fill { fill: #ffcc4d; fill-opacity: 0.3; pointer-events: none; }
+  .lp { stroke: #333; stroke-width: 0.5; }
+  .lp.flip { stroke: #000; stroke-width: 2.5; }
+  .lp-label { font-size: 7px; fill: #444; user-select: none; pointer-events: none; }
+  .arc { stroke: #1e40af; stroke-width: 1.5; fill: none; }
+  .arc.neg { stroke: #b91c1c; }
+  table.signs { border-collapse: collapse; font-size: 0.85em; margin-top: 0.5em; }
+  table.signs td, table.signs th { padding: 3px 8px; border: 1px solid #ddd; text-align: center; }
+  table.signs td.plus { background: #dbeafe; color: #1e40af; font-weight: 600; }
+  table.signs td.minus { background: #fee2e2; color: #b91c1c; font-weight: 600; }
+  table.signs td.flip { outline: 2px solid #000; outline-offset: -2px; }
+  code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 0.95em; }
+  .result-box { padding: 0.5em 1em; background: #fef8e7; border-left: 3px solid #f0b429; border-radius: 3px; margin-top: 0.5em; font-size: 0.9em; }
+  .result-box.bad { background: #fee2e2; border-left-color: #b91c1c; }
+  .result-box.good { background: #dcfce7; border-left-color: #15803d; }
+  .formula { font-family: 'STIX Two Math', 'Latin Modern Math', serif; font-size: 1.05em; padding: 0.5em 1em; background: #f4f4f4; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>d = 4 counter-example: an even surgical twist destroys an oval</h1>
+<div class="lede">
+A concrete, fully reproducible demonstration that the §4.4 invocation of Haas Thm 10.6.0.5
+in "121 patchworked curves" is not justified for surgical twists: applying the §4.3 surgical
+twist for an even Harnack split <code>(0,3)–(2,0)</code> to η on the triangulation T below
+yields a sign distribution σ' whose patchworked curve C(T, σ') has only 3 ovals, vs. C(T, η)'s 4.
+The M-curve property is destroyed.
+</div>
+
+<h2>1. The setup: triangulation T of 4·Δ₂</h2>
+<div class="row">
+  <div class="panel">
+    <svg id="svg-T" width="360" height="360" viewBox="-30 -30 390 390"></svg>
+    <div class="panel-caption">
+      Unimodular triangulation T with 16 triangles. The edge <span style="color:#c0392b;font-weight:600">(0,3)–(2,0)</span> (red) is a primitive interior edge shared between two triangles.
+    </div>
+  </div>
+  <div style="flex: 1; min-width: 280px">
+    <p>T is a unimodular triangulation of <code>4·Δ₂</code> with all 15 lattice points as vertices and 16 triangles of unit area each. The edge <code>(0,3)–(2,0)</code> is included as an interior edge — this is the precondition for the surgical twist to be defined on T.</p>
+    <p>Verified independently: 5 distinct unimodular T's at d=4 contain this edge, all give the same (p,n) result reported here.</p>
+  </div>
+</div>
+
+<h2>2. The split <code>S = (0,3)–(2,0)</code> and its zone Z</h2>
+<div class="row">
+  <div class="panel">
+    <svg id="svg-zone" width="360" height="360" viewBox="-30 -30 390 390"></svg>
+    <div class="panel-caption">
+      The simple Harnack split S highlighted in red; zone Z = surrounded region (yellow) = triangle <code>(0,0)–(0,3)–(2,0)</code>.
+    </div>
+  </div>
+  <div style="flex: 1; min-width: 280px">
+    <p>S is a simple Harnack split: a single primitive lattice edge with endpoints of distinct parities.</p>
+    <p>Parities: (0,3) has parity (0,1); (2,0) has parity (0,0). So the parity pair is <code>{α, β} = {(0,0), (0,1)}</code>.</p>
+    <p>Since one parity is (0,0), this is an <strong>even</strong> Harnack split, giving <code>ε = α₁β₂ + α₂β₁ = 0</code>.</p>
+    <p>The "zone surrounded by S" is the corner triangle <code>(0,0)–(0,3)–(2,0)</code>, i.e. the smaller of the two regions S cuts 4·Δ₂ into.</p>
+  </div>
+</div>
+
+<h2>3. The surgical twist (§4.3 formula)</h2>
+<div class="formula">
+σ'(x) = σ(x) &nbsp; if x ∉ Z,&nbsp;&nbsp;&nbsp;
+σ'(x) = ε ⊕ σ(s<sub>ji</sub>(x)) &nbsp; if x ∈ Z
+&nbsp;&nbsp;with&nbsp;ε = α₁β₂+α₂β₁, &nbsp;i = β₁+β₂, &nbsp;j = α₁+α₂
+</div>
+<p>For our split: <code>α = (0,0)</code>, <code>β = (0,1)</code>, so <code>(ε, i, j) = (0, 1, 0)</code>. The canonical extension of σ to A^◇ gives <code>σ(s<sub>ji</sub>(x)) = σ(x) ⊕ (j·x₁ ⊕ i·x₂) = σ(x) ⊕ x₂</code>. So inside Z, <strong>σ' differs from σ at points with odd x₂</strong>.</p>
+
+<div class="row">
+  <div class="panel">
+    <svg id="svg-eta" width="360" height="360" viewBox="-30 -30 390 390"></svg>
+    <div class="panel-caption">η at each lattice point. Filled blue = σ=+ (parity (0,0)), red = σ=−.</div>
+  </div>
+  <div class="panel">
+    <svg id="svg-sigp" width="360" height="360" viewBox="-30 -30 390 390"></svg>
+    <div class="panel-caption">σ' = twist(η, S). The two flipped points are <strong>(0,1)</strong> and <strong>(1,1)</strong> (black outline) — both in zone Z, both with odd x₂.</div>
+  </div>
+</div>
+
+<h2>4. The patchworked curves via Viro construction</h2>
+<p>For each triangle of T, the curve crosses an edge iff the two vertex signs differ. The midpoint of each such edge is a crossing; in each triangle the curve consists of arcs connecting these crossings. We render this in Q1, then reflect to the four quadrants of (R*)² to display the full real curve (the (p,n) classification is invariant under further compactification to RP²).</p>
+
+<div class="row">
+  <div class="panel">
+    <svg id="svg-curve-eta" width="540" height="540" viewBox="-300 -300 600 600"></svg>
+    <div class="panel-caption">
+      <strong>C(T, η) — 4 ovals, scheme ⟨4⟩</strong><br>
+      Standard d=4 Harnack M-curve. 4 disjoint ovals, all "outside" each other. <code>(p, n) = (4, 0)</code>.
+    </div>
+  </div>
+  <div class="panel">
+    <svg id="svg-curve-sigp" width="540" height="540" viewBox="-300 -300 600 600"></svg>
+    <div class="panel-caption">
+      <strong>C(T, σ') — 3 ovals, scheme ⟨3⟩</strong><br>
+      Same triangulation T, signs after the even surgical twist. <strong>Only 3 ovals</strong>. <code>(p, n) = (3, 0)</code> — this is no longer an M-curve (d=4 M-curve has 4 ovals).
+    </div>
+  </div>
+</div>
+
+<div class="result-box bad">
+<strong>Observation.</strong> The surgical twist by an even Harnack split changed the patchworked curve from an M-curve (4 ovals) to a non-M-curve (3 ovals). In particular, (p,n) is not preserved. This contradicts the §4.4 paper's implicit reading of Haas Thm 10.6.0.5 as "even surgical twists are (p,n)-preserving no-ops".
+</div>
+
+<h2>5. What this does and doesn't say</h2>
+<ul>
+  <li><strong>Haas Thm 10.6.0.5 itself is correct and not contradicted.</strong> Haas's theorem is about removing even edges from a <em>zone decomposition</em> Δ and recomputing the zone-wise Harnack distribution K(Δ'). That is a different operation from the §4.3 surgical twist on a sign distribution σ.</li>
+  <li><strong>The 121 paper's §4.4 invocation of Haas 10.6.0.5 is unjustified for surgical twists.</strong> A bridge lemma "applying the surgical twist for an even Harnack split S to σ = K(Δ) yields σ' = K(Δ \ S)" is needed and not provided. Our test shows that no such bridge can hold in this form: σ' here does not match K(Δ') for any Δ', because the result isn't even an M-curve.</li>
+  <li><strong>For the σ-DAG of M-curve sign distributions, even splits must be included as live edges.</strong> Restricting to odd splits only (as the §4.4 reduction suggests) genuinely misses reachable σ's.</li>
+</ul>
+
+<h2>6. Reproducibility</h2>
+<p>The σ' is computed bit-for-bit by the surgical-twist formula. The triangulation T is one of 5 unimodular triangulations at d=4 containing the edge (0,3)–(2,0); all 5 give the same ⟨4⟩ → ⟨3⟩ shift. The Viro classification is independent infrastructure (the standard <code>isotopy</code> classifier used throughout the project). See thread <code>5a2865</code> in the research repo for the full discussion and reference notes (<code>.references/1997:Haas:RealAlgCurvesCombinatorialConstructions/NOTES.md</code>).</p>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const D = 4;
+const CELL_LATTICE = 80;   // px per unit for lattice diagrams
+const CELL_CURVE = 60;     // px per unit for curve diagrams (one quadrant)
+
+// Lattice point coords (index -> (x, y)), from get_coord_table(4)
+const COORDS = [
+  [0,0],[0,1],[0,2],[0,3],[0,4],
+  [1,0],[1,1],[1,2],[1,3],
+  [2,0],[2,1],[2,2],
+  [3,0],[3,1],
+  [4,0]
+];
+const N = COORDS.length; // 15
+
+// Triangulation T (extracted from rust enumerator, first T containing edge (0,3)-(2,0))
+const TRIANGLES = [
+  [0,5,1],[1,5,2],[2,5,3],[3,5,6],[3,6,9],[3,9,7],[3,7,4],[4,7,8],
+  [5,9,6],[7,9,8],[8,9,10],[8,10,11],[9,12,10],[10,12,11],[11,12,13],
+  [12,14,13]
+];
+
+// η: + iff both coords even
+const ETA = COORDS.map(([x,y]) => (x % 2 === 0) && (y % 2 === 0));
+// σ': η with flips at indices 1 = (0,1) and 6 = (1,1)
+const SIGMA_PRIME = ETA.map((s, i) => (i === 1 || i === 6) ? !s : s);
+
+// ---- Lattice diagram helpers ----
+function latticePos(x, y) { return [x * CELL_LATTICE, (D - y) * CELL_LATTICE]; }
+
+function drawLatticeBoundary(svg) {
+  const [a,b] = latticePos(0,0), [c,d] = latticePos(D,0), [e,f] = latticePos(0,D);
+  const p = document.createElementNS(NS, 'polygon');
+  p.setAttribute('points', `${a},${b} ${c},${d} ${e},${f}`);
+  p.setAttribute('class', 'boundary');
+  svg.appendChild(p);
+}
+
+function drawTriangulation(svg, highlightEdge) {
+  // Collect unique edges with multiplicity (interior edges shared by 2 triangles)
+  const edgeKey = (a, b) => a < b ? `${a},${b}` : `${b},${a}`;
+  const edges = new Map(); // key -> [a, b, count]
+  for (const tri of TRIANGLES) {
+    for (let i = 0; i < 3; i++) {
+      const a = tri[i], b = tri[(i+1)%3];
+      const k = edgeKey(a, b);
+      if (!edges.has(k)) edges.set(k, {a: Math.min(a,b), b: Math.max(a,b), n: 0});
+      edges.get(k).n++;
+    }
+  }
+  for (const {a, b} of edges.values()) {
+    const [px1, py1] = latticePos(...COORDS[a]);
+    const [px2, py2] = latticePos(...COORDS[b]);
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', px1); line.setAttribute('y1', py1);
+    line.setAttribute('x2', px2); line.setAttribute('y2', py2);
+    const isReq = highlightEdge && ((a === highlightEdge[0] && b === highlightEdge[1]) || (a === highlightEdge[1] && b === highlightEdge[0]));
+    line.setAttribute('class', isReq ? 'tri-edge-req' : 'tri-edge');
+    svg.appendChild(line);
+  }
+}
+
+function drawLatticePoints(svg, signs, flipIndices, asSigns) {
+  for (let i = 0; i < N; i++) {
+    const [x, y] = COORDS[i];
+    const [px, py] = latticePos(x, y);
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', px); c.setAttribute('cy', py);
+    c.setAttribute('r', 7);
+    if (asSigns) {
+      c.setAttribute('fill', signs[i] ? '#1d4ed8' : '#dc2626');
+    } else {
+      c.setAttribute('fill', '#444');
+    }
+    let cls = 'lp';
+    if (flipIndices && flipIndices.includes(i)) cls += ' flip';
+    c.setAttribute('class', cls);
+    svg.appendChild(c);
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', px + 10); t.setAttribute('y', py - 8);
+    t.setAttribute('class', 'lp-label');
+    t.textContent = `${x},${y}`;
+    svg.appendChild(t);
+  }
+}
+
+function drawZone(svg, vertices) {
+  const poly = document.createElementNS(NS, 'polygon');
+  poly.setAttribute('points', vertices.map(([x,y]) => latticePos(x,y).join(',')).join(' '));
+  poly.setAttribute('class', 'zone-fill');
+  svg.appendChild(poly);
+}
+
+// ---- Panel 1: triangulation T ----
+{
+  const svg = document.getElementById('svg-T');
+  drawLatticeBoundary(svg);
+  drawTriangulation(svg, [3, 9]); // edge (0,3)-(2,0) = indices 3 and 9
+  drawLatticePoints(svg, ETA, [], false);
+}
+
+// ---- Panel 2: zone Z highlighted ----
+{
+  const svg = document.getElementById('svg-zone');
+  drawLatticeBoundary(svg);
+  drawZone(svg, [[0,0], [0,3], [2,0]]);
+  drawTriangulation(svg, [3, 9]);
+  drawLatticePoints(svg, ETA, [], false);
+}
+
+// ---- Panel 3: η signs ----
+{
+  const svg = document.getElementById('svg-eta');
+  drawLatticeBoundary(svg);
+  drawTriangulation(svg, null);
+  drawLatticePoints(svg, ETA, [], true);
+}
+
+// ---- Panel 4: σ' signs ----
+{
+  const svg = document.getElementById('svg-sigp');
+  drawLatticeBoundary(svg);
+  drawZone(svg, [[0,0], [0,3], [2,0]]);
+  drawTriangulation(svg, [3, 9]);
+  drawLatticePoints(svg, SIGMA_PRIME, [1, 6], true);
+}
+
+// ---- Viro chart construction ----
+// For each triangle with signs (s1, s2, s3) at vertices v1, v2, v3:
+//   If all same: no arc
+//   Else: find the "odd one out" vertex, and connect midpoints of the two edges
+//         containing it to the other two vertices.
+function chartArcs(signs) {
+  const arcs = []; // [[(x1,y1), (x2,y2)], ...]
+  for (const tri of TRIANGLES) {
+    const [a, b, c] = tri;
+    const sa = signs[a], sb = signs[b], sc = signs[c];
+    const pa = COORDS[a], pb = COORDS[b], pc = COORDS[c];
+    let odd; // index of the differing vertex; null if all same
+    if (sa === sb && sb === sc) continue;
+    if (sa !== sb && sa !== sc) odd = 0;
+    else if (sb !== sa && sb !== sc) odd = 1;
+    else odd = 2;
+    const vs = [pa, pb, pc];
+    const other = [(odd+1)%3, (odd+2)%3];
+    // midpoints of edges (odd, other[0]) and (odd, other[1])
+    const m1 = [(vs[odd][0]+vs[other[0]][0])/2, (vs[odd][1]+vs[other[0]][1])/2];
+    const m2 = [(vs[odd][0]+vs[other[1]][0])/2, (vs[odd][1]+vs[other[1]][1])/2];
+    arcs.push([m1, m2]);
+  }
+  return arcs;
+}
+
+// Render a Viro curve in all 4 quadrants of (R*)².
+// Q1 = positive (uses signs as given).
+// Reflect to Q2 (negate x), Q3 (negate both), Q4 (negate y) — but signs in each
+// reflected quadrant follow the canonical Viro extension:
+//   σ̃(quadrant a,b at (|x|,|y|)) = σ(|x|,|y|) ⊕ (a·|x| ⊕ b·|y|)
+// So the chart arcs in each quadrant may be DIFFERENT from the simple reflection.
+function chartArcsAllQuadrants(signs) {
+  const all = []; // [{quadrant: [a,b], arcs: [...]}, ...]
+  for (let a = 0; a < 2; a++) {
+    for (let b = 0; b < 2; b++) {
+      const refSigns = COORDS.map(([x, y], i) =>
+        signs[i] ^ ((a * x) & 1 ? true : false) ^ ((b * y) & 1 ? true : false)
+      );
+      const arcs = chartArcs(refSigns);
+      all.push({a, b, arcs});
+    }
+  }
+  return all;
+}
+
+function drawCurve(svgId, signs) {
+  const svg = document.getElementById(svgId);
+  // Draw the 4-quadrant grid framing
+  const C = CELL_CURVE;
+  const span = D * C; // each quadrant extends D units
+
+  // Light grid for the 4 quadrants
+  const grid = document.createElementNS(NS, 'g');
+  grid.setAttribute('class', 'grid');
+  for (let i = -D; i <= D; i++) {
+    const l1 = document.createElementNS(NS, 'line');
+    l1.setAttribute('x1', -span); l1.setAttribute('y1', i*C);
+    l1.setAttribute('x2', span);  l1.setAttribute('y2', i*C);
+    grid.appendChild(l1);
+    const l2 = document.createElementNS(NS, 'line');
+    l2.setAttribute('x1', i*C); l2.setAttribute('y1', -span);
+    l2.setAttribute('x2', i*C); l2.setAttribute('y2', span);
+    grid.appendChild(l2);
+  }
+  svg.appendChild(grid);
+  // Axes
+  const ax1 = document.createElementNS(NS, 'line');
+  ax1.setAttribute('x1', -span); ax1.setAttribute('y1', 0);
+  ax1.setAttribute('x2', span);  ax1.setAttribute('y2', 0);
+  ax1.setAttribute('stroke', '#888'); ax1.setAttribute('stroke-width', 1);
+  svg.appendChild(ax1);
+  const ax2 = document.createElementNS(NS, 'line');
+  ax2.setAttribute('x1', 0); ax2.setAttribute('y1', -span);
+  ax2.setAttribute('x2', 0); ax2.setAttribute('y2', span);
+  ax2.setAttribute('stroke', '#888'); ax2.setAttribute('stroke-width', 1);
+  svg.appendChild(ax2);
+  // Newton triangle outline in Q1
+  const tri = document.createElementNS(NS, 'polygon');
+  tri.setAttribute('points', `0,0 ${D*C},0 0,${-D*C}`);
+  tri.setAttribute('fill', 'none');
+  tri.setAttribute('stroke', '#bbb');
+  tri.setAttribute('stroke-dasharray', '3,3');
+  svg.appendChild(tri);
+  // And reflected triangles in Q2, Q3, Q4
+  for (const [sx, sy] of [[-1,1],[-1,-1],[1,-1]]) {
+    const tri2 = document.createElementNS(NS, 'polygon');
+    tri2.setAttribute('points', `0,0 ${sx*D*C},0 0,${-sy*D*C}`);
+    tri2.setAttribute('fill', 'none');
+    tri2.setAttribute('stroke', '#bbb');
+    tri2.setAttribute('stroke-dasharray', '3,3');
+    svg.appendChild(tri2);
+  }
+
+  // Arcs in each quadrant
+  const allArcs = chartArcsAllQuadrants(signs);
+  for (const {a, b, arcs} of allArcs) {
+    const sx = a ? -1 : 1;
+    const sy = b ? -1 : 1;
+    for (const [[x1,y1], [x2,y2]] of arcs) {
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', sx * x1 * C);
+      line.setAttribute('y1', -sy * y1 * C);
+      line.setAttribute('x2', sx * x2 * C);
+      line.setAttribute('y2', -sy * y2 * C);
+      line.setAttribute('class', 'arc');
+      svg.appendChild(line);
+    }
+  }
+}
+
+drawCurve('svg-curve-eta', ETA);
+drawCurve('svg-curve-sigp', SIGMA_PRIME);
+</script>
+</body>
+</html>
