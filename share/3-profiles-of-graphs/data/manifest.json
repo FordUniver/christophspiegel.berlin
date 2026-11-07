@@ -1,0 +1,144 @@
+{
+  "groups": [
+    {
+      "m": 3,
+      "offset": 0,
+      "width": 3,
+      "coords": [
+        "d1",
+        "d2",
+        "d3"
+      ],
+      "implicitKey": "d0",
+      "complementPerm": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "derived": {
+        "d": {
+          "label": "edge density d",
+          "short": "d",
+          "coeffs": [
+            0.333333333333,
+            0.666666666667,
+            1.0
+          ],
+          "const": 0.0
+        },
+        "delta2": {
+          "label": "hom-cherry \u03b4\u2082",
+          "short": "\u03b4\u2082",
+          "coeffs": [
+            0.0,
+            0.333333333333,
+            1.0
+          ],
+          "const": 0.0
+        },
+        "m": {
+          "label": "cherry band d\u2081+d\u2082",
+          "short": "d\u2081+d\u2082",
+          "coeffs": [
+            1.0,
+            1.0,
+            0.0
+          ],
+          "const": 0.0
+        },
+        "e": {
+          "label": "edge asymmetry e = 2d\u22121",
+          "short": "e",
+          "coeffs": [
+            0.666666666667,
+            1.333333333333,
+            2.0
+          ],
+          "const": -1.0
+        },
+        "phi": {
+          "label": "clustering \u03c6 (signed, deg-3)",
+          "short": "\u03c6",
+          "coeffs": [
+            1.333333333333,
+            -0.666666666667,
+            0.666666666667
+          ],
+          "const": -0.333333333333
+        },
+        "mono": {
+          "label": "monochromatic d\u2080+d\u2083",
+          "short": "d\u2080+d\u2083",
+          "coeffs": [
+            -1.0,
+            -1.0,
+            0.0
+          ],
+          "const": 1.0
+        },
+        "h1": {
+          "label": "harmonic 1\u22122d",
+          "short": "h\u2081",
+          "coeffs": [
+            -0.666666666667,
+            -1.333333333333,
+            -2.0
+          ],
+          "const": 1.0
+        },
+        "h2": {
+          "label": "harmonic 1\u22124d+4/3 d\u2082+4d\u2083",
+          "short": "h\u2082",
+          "coeffs": [
+            -1.333333333333,
+            -1.333333333333,
+            0.0
+          ],
+          "const": 1.0
+        },
+        "h3": {
+          "label": "harmonic 1\u22126d+4d\u2082+4d\u2083",
+          "short": "h\u2083",
+          "coeffs": [
+            -2.0,
+            0.0,
+            -2.0
+          ],
+          "const": 1.0
+        }
+      }
+    }
+  ],
+  "sheets": [
+    "regular.json",
+    "goodman-reg.json",
+    "clique-independent.json",
+    "co-clique-independent.json",
+    "huang-et-al.json",
+    "co-huang-et-al.json",
+    "disjoint-cliques.json",
+    "complete-multipartite.json",
+    "gnp.json",
+    "razborov.json",
+    "co-razborov.json",
+    "multipartite-tpartite.json",
+    "plateau.json",
+    "bipartite.json",
+    "co-bipartite.json",
+    "c5-blowup.json",
+    "co-c5-blowup.json",
+    "glebov-ha.json",
+    "co-glebov-ha.json",
+    "regular-razborov.json",
+    "co-regular-razborov.json",
+    "razborov-lo-crease.json",
+    "co-razborov-lo-crease.json",
+    "split-crease.json",
+    "rise.json",
+    "goodman-tri.json",
+    "razborov-bound.json",
+    "huang-bound.json",
+    "even-disjoint-cliques.json"
+  ]
+}
